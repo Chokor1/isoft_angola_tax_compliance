@@ -1,0 +1,18 @@
+include MANIFEST.in
+include requirements.txt
+include *.json
+include *.md
+include *.py
+include *.txt
+recursive-include isoft_angola_tax_compliance *.css
+recursive-include isoft_angola_tax_compliance *.csv
+recursive-include isoft_angola_tax_compliance *.html
+recursive-include isoft_angola_tax_compliance *.ico
+recursive-include isoft_angola_tax_compliance *.js
+recursive-include isoft_angola_tax_compliance *.json
+recursive-include isoft_angola_tax_compliance *.md
+recursive-include isoft_angola_tax_compliance *.png
+recursive-include isoft_angola_tax_compliance *.py
+recursive-include isoft_angola_tax_compliance *.svg
+recursive-include isoft_angola_tax_compliance *.txt
+recursive-exclude isoft_angola_tax_compliance *.pyc
