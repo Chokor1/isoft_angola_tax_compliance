@@ -238,65 +238,147 @@ def diagnose(item=None, item_group=None):
 	return {"deployed": True, "rules": len(rules)}
 
 
-def backfill(confirm=False, limit=None):
-	"""Apply the rules to existing items. Dry run unless confirm=True.
+def compute_backfill(category=None, sample=10):
+	"""What a backfill would change. Pure computation -- writes nothing.
 
-	Only fills items whose category is empty; a value set by hand is never
-	touched.
+	`category` limits it to one category's rule, which is what the button on the
+	category form uses. Without it, every enabled rule is considered.
 	"""
 	rules = get_rules()
+	if category:
+		rules = [r for r in rules if r["category"] == category]
 
-	print("=" * 74)
-	print("  AUTO-ASSIGN BACKFILL" + ("" if confirm else "   [DRY RUN -- nothing written]"))
-	print("=" * 74)
+	result = {
+		"category": category,
+		"rules": [
+			{
+				"category": r["category"],
+				"non_stock": r["non_stock"],
+				"groups": [
+					g["item_group"] + ("*" if g["include_children"] else "") for g in r["groups"]
+				],
+			}
+			for r in rules
+		],
+		"untagged_items": 0,
+		"matched": 0,
+		"by_category": {},
+		"sample": [],
+	}
 
 	if not rules:
-		print("\n  No category has 'Auto-assign to New Items' enabled. Nothing to do.")
-		return {"rules": 0, "matched": 0}
+		return result
 
-	print("\n  Rules")
-	for rule in rules:
-		groups = ", ".join(
-			g["item_group"] + ("*" if g["include_children"] else "") for g in rule["groups"]
-		)
-		print(f"    {rule['category']}")
-		print(f"        non-stock : {rule['non_stock']}")
-		print(f"        groups    : {groups or '-'}   (* = includes child groups)")
+	items = frappe.get_all(
+		"Item",
+		filters={CATEGORY_FIELD: ["in", ["", None]]},
+		fields=["name", "item_name", "item_group", "is_stock_item"],
+		order_by="name asc",
+	)
+	result["untagged_items"] = len(items)
+
+	for item in items:
+		hit = resolve(item.item_group, item.is_stock_item, rules)
+		if not hit:
+			continue
+
+		result["matched"] += 1
+		result["by_category"][hit] = result["by_category"].get(hit, 0) + 1
+		if len(result["sample"]) < sample:
+			result["sample"].append(
+				{
+					"item": item.name,
+					"item_name": item.item_name,
+					"item_group": item.item_group,
+					"is_stock_item": item.is_stock_item,
+					"category": hit,
+				}
+			)
+
+	return result
+
+
+def apply_backfill(category=None):
+	"""Write the categories a backfill would assign. Returns how many changed."""
+	rules = get_rules()
+	if category:
+		rules = [r for r in rules if r["category"] == category]
+	if not rules:
+		return {"updated": 0}
 
 	items = frappe.get_all(
 		"Item",
 		filters={CATEGORY_FIELD: ["in", ["", None]]},
 		fields=["name", "item_group", "is_stock_item"],
-		limit_page_length=limit or 0,
 		order_by="name asc",
 	)
 
-	matched = {}
-	for item in items:
-		category = resolve(item.item_group, item.is_stock_item, rules)
-		if category:
-			matched.setdefault(category, []).append(item)
-
-	print(f"\n  Items with no category : {len(items)}")
-	print(f"  Matched by a rule      : {sum(len(v) for v in matched.values())}")
-	for category, rows in matched.items():
-		print(f"      {category}: {len(rows)}")
-		for row in rows[:5]:
-			print(f"          {row.name[:28]:30} group={str(row.item_group)[:20]:22} stock={row.is_stock_item}")
-		if len(rows) > 5:
-			print(f"          ... and {len(rows) - 5} more")
-
-	if not confirm:
-		print("\n  DRY RUN -- nothing written. Re-run with --kwargs '{\"confirm\": true}'.")
-		return {"rules": len(rules), "matched": sum(len(v) for v in matched.values())}
-
 	updated = 0
-	for category, rows in matched.items():
-		for row in rows:
-			frappe.db.set_value("Item", row.name, CATEGORY_FIELD, category, update_modified=False)
-			updated += 1
+	for item in items:
+		hit = resolve(item.item_group, item.is_stock_item, rules)
+		if not hit:
+			continue
+		frappe.db.set_value("Item", item.name, CATEGORY_FIELD, hit, update_modified=False)
+		updated += 1
 
 	frappe.db.commit()
 	frappe.clear_cache()
-	print(f"\n  Updated {updated} item(s).")
-	return {"rules": len(rules), "matched": updated, "applied": True}
+	return {"updated": updated}
+
+
+@frappe.whitelist()
+def get_backfill_preview(category=None):
+	"""Whitelisted preview for the button on Tax Withholding Category."""
+	_check_permission()
+	return compute_backfill(category)
+
+
+@frappe.whitelist()
+def run_backfill(category=None):
+	"""Whitelisted apply. Only reachable by someone who may edit Items."""
+	_check_permission()
+	return apply_backfill(category)
+
+
+def _check_permission():
+	"""A bulk item update needs write on Item, not merely read on the category."""
+	frappe.has_permission("Item", "write", throw=True)
+
+
+def backfill(confirm=False, limit=None, category=None):
+	"""Command-line entry point. Dry run unless confirm=True.
+
+	The UI button uses get_backfill_preview / run_backfill instead; both sit on
+	the same computation, so the two can never disagree.
+	"""
+	preview = compute_backfill(category, sample=limit or 10)
+
+	print("=" * 74)
+	print("  AUTO-ASSIGN BACKFILL" + ("" if confirm else "   [DRY RUN -- nothing written]"))
+	print("=" * 74)
+
+	if not preview["rules"]:
+		print("\n  No category has 'Auto-assign to New Items' enabled. Nothing to do.")
+		return preview
+
+	print("\n  Rules")
+	for rule in preview["rules"]:
+		print(f"    {rule['category']}")
+		print(f"        non-stock : {rule['non_stock']}")
+		print(f"        groups    : {', '.join(rule['groups']) or '-'}   (* = includes child groups)")
+
+	print(f"\n  Items with no category : {preview['untagged_items']}")
+	print(f"  Matched by a rule      : {preview['matched']}")
+	for name, count in preview["by_category"].items():
+		print(f"      {name}: {count}")
+	for row in preview["sample"]:
+		print(f"          {row['item'][:28]:30} group={str(row['item_group'])[:20]:22} stock={row['is_stock_item']}")
+
+	if not confirm:
+		print("\n  DRY RUN -- nothing written. Re-run with --kwargs '{\"confirm\": true}'.")
+		return preview
+
+	applied = apply_backfill(category)
+	print(f"\n  Updated {applied['updated']} item(s).")
+	preview.update(applied)
+	return preview

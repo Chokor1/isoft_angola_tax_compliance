@@ -65,6 +65,7 @@ app_include_js = "/assets/isoft_angola_tax_compliance/js/withholding_preview.js"
 doctype_js = {
 	"Sales Invoice": "public/js/sales_invoice.js",
 	"Quotation": "public/js/quotation.js",
+	"Tax Withholding Category": "public/js/tax_withholding_category.js",
 }
 
 # Quotation posts no GL, so it needs no controller override -- only the
@@ -231,6 +232,7 @@ app_include_js = "/assets/isoft_angola_tax_compliance/js/withholding_preview.js"
 doctype_js = {
 	"Sales Invoice": "public/js/sales_invoice.js",
 	"Quotation": "public/js/quotation.js",
+	"Tax Withholding Category": "public/js/tax_withholding_category.js",
 }
 
 # Quotation posts no GL, so it needs no controller override -- only the

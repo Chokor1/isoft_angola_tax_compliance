@@ -192,7 +192,13 @@ updated rather than skipped, so definition changes still propagate.
    blanket.
 
    New items are stamped on insert. Existing items are left alone, so switching
-   a rule on cannot quietly re-tag history — backfill them once, deliberately:
+   a rule on cannot quietly re-tag history — backfill them once, deliberately.
+
+   **From the UI:** open the category and use **Assign to Existing Items**. It
+   shows how many items match, a sample of them, and the rule being applied,
+   then asks to confirm. The preview writes nothing.
+
+   **From the shell**, same computation behind it:
 
    ```bash
    bench --site <site> execute isoft_angola_tax_compliance.auto_assign.backfill
