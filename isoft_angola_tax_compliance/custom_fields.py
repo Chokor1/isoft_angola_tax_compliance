@@ -83,6 +83,48 @@ def get_custom_fields():
 				"insert_after": "atc_base_accounts_section",
 				"depends_on": "eval:doc.atc_base_type=='Tax Amount'",
 			},
+			{
+				"fieldname": "atc_auto_assign_section",
+				"fieldtype": "Section Break",
+				"label": "Automatic Item Assignment",
+				"insert_after": "atc_base_tax_accounts",
+				"depends_on": "eval:doc.atc_applies_to=='Item Based'",
+				"collapsible": 1,
+				"description": (
+					"Stamps this category onto new items that match. Existing items are "
+					"left alone -- backfill them once with "
+					"<code>isoft_angola_tax_compliance.auto_assign.backfill</code>."
+				),
+			},
+			{
+				"fieldname": "atc_auto_assign",
+				"fieldtype": "Check",
+				"label": "Auto-assign to New Items",
+				"default": "0",
+				"insert_after": "atc_auto_assign_section",
+				"depends_on": "eval:doc.atc_applies_to=='Item Based'",
+			},
+			{
+				"fieldname": "atc_auto_assign_non_stock",
+				"fieldtype": "Check",
+				"label": "All Non-Stock Items",
+				"default": "0",
+				"insert_after": "atc_auto_assign",
+				"depends_on": "eval:doc.atc_auto_assign",
+				"description": (
+					"Matches every item with <code>is_stock_item = 0</code>. Broad: a "
+					"non-stock item is not necessarily a service. An item group rule "
+					"below is more precise and takes precedence."
+				),
+			},
+			{
+				"fieldname": "atc_auto_assign_item_groups",
+				"fieldtype": "Table",
+				"label": "Item Groups",
+				"options": "Angola Withholding Item Group",
+				"insert_after": "atc_auto_assign_non_stock",
+				"depends_on": "eval:doc.atc_auto_assign",
+			},
 		],
 		"Customer": [
 			{

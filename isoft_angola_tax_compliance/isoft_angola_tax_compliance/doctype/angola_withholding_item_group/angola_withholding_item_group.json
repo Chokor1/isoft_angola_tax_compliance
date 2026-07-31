@@ -1,0 +1,43 @@
+{
+ "actions": [],
+ "creation": "2026-07-31 00:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "item_group",
+  "include_child_groups"
+ ],
+ "fields": [
+  {
+   "columns": 7,
+   "fieldname": "item_group",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Item Group",
+   "options": "Item Group",
+   "reqd": 1
+  },
+  {
+   "columns": 3,
+   "default": "1",
+   "description": "Also match items in groups nested under this one.",
+   "fieldname": "include_child_groups",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Include Child Groups"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2026-07-31 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Isoft Angola Tax Compliance",
+ "name": "Angola Withholding Item Group",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "track_changes": 0
+}

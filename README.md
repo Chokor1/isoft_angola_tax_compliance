@@ -173,8 +173,36 @@ updated rather than skipped, so definition changes still propagate.
    several regimes at once. Close `valid_to` rather than deleting a row when a
    dispensa is granted.
 4. **Item / Item Group → Withholding Category (Angola)** — for the item-based
-   regime. Resolution, most specific first:
-   `SI Item → Item → Item Group tree → Settings default`.
+   regime. Resolution at invoice time, most specific first:
+   `SI Item → Item → Item Group tree`.
+
+   Tagging thousands of items by hand is not the intent. Each category can claim
+   items itself, under **Automatic Item Assignment** on the category:
+
+   | Rule | Matches |
+   |---|---|
+   | All Non-Stock Items | every item with `is_stock_item = 0` |
+   | Item Groups | the listed groups, optionally including nested ones |
+
+   A group rule beats the non-stock rule, and among group rules the nearest
+   ancestor of the item's group wins. That ordering is deliberate: *non-stock*
+   is not *service* — a re-billed expense or a non-stock good is also non-stock,
+   and conflating the two is exactly the defect in the legacy code this app
+   replaced. The group rule is the precise one; non-stock is the convenient
+   blanket.
+
+   New items are stamped on insert. Existing items are left alone, so switching
+   a rule on cannot quietly re-tag history — backfill them once, deliberately:
+
+   ```bash
+   bench --site <site> execute isoft_angola_tax_compliance.auto_assign.backfill
+   bench --site <site> execute isoft_angola_tax_compliance.auto_assign.backfill \
+       --kwargs '{"confirm": true}'
+   ```
+
+   The dry run prints the rules, how many items have no category, and which ones
+   each rule would claim. Only empty fields are filled; a value set by hand is
+   never overwritten.
 5. **Angola Tax Compliance Settings** — set the company's mode.
 
 ## Migrating the legacy configuration

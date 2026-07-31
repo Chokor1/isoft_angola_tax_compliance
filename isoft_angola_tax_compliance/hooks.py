@@ -73,6 +73,11 @@ doc_events = {
 	"Quotation": {
 		"validate": "isoft_angola_tax_compliance.withholding.apply.set_withholdings",
 	},
+	# Stamp the withholding category on newly created items, per the rules on
+	# the categories themselves. Insert only, and only when the field is empty.
+	"Item": {
+		"before_insert": "isoft_angola_tax_compliance.auto_assign.apply_to_item",
+	},
 }
 
 after_install = "isoft_angola_tax_compliance.install.after_install"
@@ -233,6 +238,11 @@ doctype_js = {
 doc_events = {
 	"Quotation": {
 		"validate": "isoft_angola_tax_compliance.withholding.apply.set_withholdings",
+	},
+	# Stamp the withholding category on newly created items, per the rules on
+	# the categories themselves. Insert only, and only when the field is empty.
+	"Item": {
+		"before_insert": "isoft_angola_tax_compliance.auto_assign.apply_to_item",
 	},
 }
 
