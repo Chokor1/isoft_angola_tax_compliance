@@ -4,3 +4,9 @@
 *.swp
 tags
 isoft_angola_tax_compliance/docs/current
+__pycache__/
+
+# Bench-specific smoke-test harnesses. Hardcoded to one install's companies,
+# customers, chart of accounts and invoice numbers, so they are of no use in any
+# other deployment and must not be published.
+isoft_angola_tax_compliance/_*.py

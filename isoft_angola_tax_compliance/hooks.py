@@ -57,7 +57,25 @@ app_license = "MIT"
 # ------------
 
 # before_install = "isoft_angola_tax_compliance.install.before_install"
-# after_install = "isoft_angola_tax_compliance.install.after_install"
+# # Live preview of the withholding rows before save (server validate stays
+# authoritative). Frappe merges doctype_js across apps, so this stacks with the
+# Sales Invoice JS already contributed by isoft_picking / AGT / intelize.
+app_include_js = "/assets/isoft_angola_tax_compliance/js/withholding_preview.js"
+
+doctype_js = {
+	"Sales Invoice": "public/js/sales_invoice.js",
+	"Quotation": "public/js/quotation.js",
+}
+
+# Quotation posts no GL, so it needs no controller override -- only the
+# computation, so the quoted net-of-withholding figure is visible and printable.
+doc_events = {
+	"Quotation": {
+		"validate": "isoft_angola_tax_compliance.withholding.apply.set_withholdings",
+	},
+}
+
+after_install = "isoft_angola_tax_compliance.install.after_install"
 
 # Uninstallation
 # ------------
@@ -188,3 +206,35 @@ user_data_fields = [
 #	"isoft_angola_tax_compliance.auth.validate"
 # ]
 
+
+
+# ---------------------------------------------------------------------------
+# Isoft Angola Tax Compliance
+# ---------------------------------------------------------------------------
+# Adds the withholding computation + GL entries to Sales Invoice, and lets the
+# engine neutralise the legacy in-core path at runtime, without editing any
+# ERPNext file. See overrides/sales_invoice.py.
+override_doctype_class = {
+	"Sales Invoice": "isoft_angola_tax_compliance.overrides.sales_invoice.AngolaSalesInvoice",
+}
+
+# Live preview of the withholding rows before save (server validate stays
+# authoritative). Frappe merges doctype_js across apps, so this stacks with the
+# Sales Invoice JS already contributed by isoft_picking / AGT / intelize.
+app_include_js = "/assets/isoft_angola_tax_compliance/js/withholding_preview.js"
+
+doctype_js = {
+	"Sales Invoice": "public/js/sales_invoice.js",
+	"Quotation": "public/js/quotation.js",
+}
+
+# Quotation posts no GL, so it needs no controller override -- only the
+# computation, so the quoted net-of-withholding figure is visible and printable.
+doc_events = {
+	"Quotation": {
+		"validate": "isoft_angola_tax_compliance.withholding.apply.set_withholdings",
+	},
+}
+
+after_install = "isoft_angola_tax_compliance.install.after_install"
+after_migrate = "isoft_angola_tax_compliance.install.after_migrate"

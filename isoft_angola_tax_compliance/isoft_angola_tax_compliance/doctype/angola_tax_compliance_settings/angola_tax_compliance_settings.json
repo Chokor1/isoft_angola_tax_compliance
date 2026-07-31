@@ -1,0 +1,111 @@
+{
+ "actions": [],
+ "autoname": "field:company",
+ "creation": "2026-07-30 00:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "company",
+  "mode",
+  "column_break_mode",
+  "apply_on_pos",
+  "apply_on_quotation",
+  "log_comparison",
+  "section_defaults",
+  "default_service_withholding_category"
+ ],
+ "fields": [
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Company",
+   "options": "Company",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "default": "Off",
+   "description": "Off: engine disabled. Shadow: compute and log only, no GL, legacy path untouched. Active: engine posts GL inside the invoice and the legacy path is suppressed.",
+   "fieldname": "mode",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Mode",
+   "options": "Off\nShadow\nActive",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_mode",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "apply_on_pos",
+   "fieldtype": "Check",
+   "label": "Apply on POS Invoices"
+  },
+  {
+   "default": "1",
+   "description": "Show the expected retencao / IVA cativo on Quotations. Display only: a Quotation posts no GL, so this never touches the ledger.",
+   "fieldname": "apply_on_quotation",
+   "fieldtype": "Check",
+   "label": "Show on Quotations"
+  },
+  {
+   "default": "1",
+   "description": "Writes a Withholding Comparison Log row per submitted invoice while in Shadow mode.",
+   "fieldname": "log_comparison",
+   "fieldtype": "Check",
+   "label": "Log Legacy vs New Comparison"
+  },
+  {
+   "fieldname": "section_defaults",
+   "fieldtype": "Section Break",
+   "label": "Defaults"
+  },
+  {
+   "description": "Last-resort fallback for item-based categories when neither the item, its item group, nor the invoice line resolves one.",
+   "fieldname": "default_service_withholding_category",
+   "fieldtype": "Link",
+   "label": "Default Service Withholding Category",
+   "options": "Tax Withholding Category"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-07-30 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Isoft Angola Tax Compliance",
+ "name": "Angola Tax Compliance Settings",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Accounts Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "track_changes": 1
+}

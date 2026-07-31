@@ -1,0 +1,162 @@
+{
+ "actions": [],
+ "autoname": "field:sales_invoice",
+ "creation": "2026-07-30 00:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "sales_invoice",
+  "status",
+  "column_break_head",
+  "company",
+  "customer",
+  "posting_date",
+  "section_ii",
+  "legacy_ii_amount",
+  "new_ii_amount",
+  "ii_delta",
+  "column_break_iva",
+  "legacy_iva_amount",
+  "new_iva_amount",
+  "iva_delta",
+  "section_details",
+  "details"
+ ],
+ "fields": [
+  {
+   "fieldname": "sales_invoice",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Sales Invoice",
+   "options": "Sales Invoice",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Status",
+   "options": "Match\nMismatch\nLegacy Only\nNew Only\nBoth Zero"
+  },
+  {
+   "fieldname": "column_break_head",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Company",
+   "options": "Company"
+  },
+  {
+   "fieldname": "customer",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Customer",
+   "options": "Customer"
+  },
+  {
+   "fieldname": "posting_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Posting Date"
+  },
+  {
+   "fieldname": "section_ii",
+   "fieldtype": "Section Break",
+   "label": "Retencao na Fonte (II)"
+  },
+  {
+   "fieldname": "legacy_ii_amount",
+   "fieldtype": "Currency",
+   "label": "Legacy II Amount",
+   "read_only": 1
+  },
+  {
+   "fieldname": "new_ii_amount",
+   "fieldtype": "Currency",
+   "label": "New Engine II Amount",
+   "read_only": 1
+  },
+  {
+   "fieldname": "ii_delta",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "II Delta",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_iva",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "legacy_iva_amount",
+   "fieldtype": "Currency",
+   "label": "Legacy IVA Cativo Amount",
+   "read_only": 1
+  },
+  {
+   "fieldname": "new_iva_amount",
+   "fieldtype": "Currency",
+   "label": "New Engine IVA Cativo Amount",
+   "read_only": 1
+  },
+  {
+   "fieldname": "iva_delta",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "IVA Delta",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_details",
+   "fieldtype": "Section Break",
+   "label": "Details"
+  },
+  {
+   "fieldname": "details",
+   "fieldtype": "Code",
+   "label": "Details",
+   "options": "JSON",
+   "read_only": 1
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-07-30 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Isoft Angola Tax Compliance",
+ "name": "Withholding Comparison Log",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Accounts Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "track_changes": 1
+}
