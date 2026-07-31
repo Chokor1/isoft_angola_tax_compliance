@@ -229,6 +229,23 @@ updated rather than skipped, so definition changes still propagate.
    would a rule assign — and names the reason.
 5. **Angola Tax Compliance Settings** — set the company's mode.
 
+## Before updating an existing site
+
+Enablement is the company's country, so an Angolan company goes live the moment
+the code lands. If a category resolves for a customer but has no account on that
+company, `set_withholdings` throws and **that customer cannot be invoiced**.
+
+Check first — it writes nothing:
+
+```bash
+bench --site <site> execute isoft_angola_tax_compliance.readiness.check
+```
+
+It reports which companies go live, which categories exist, who is subject to
+withholding, and — the part that matters — whether every category that can
+resolve has an account on every Angolan company. It ends in `READY` or
+`NOT READY` with the specific gaps.
+
 ## Migrating the legacy configuration
 
 `migrate_legacy.py` converts the old setup into categories and customer rows.
