@@ -16,10 +16,35 @@ from isoft_angola_tax_compliance.custom_fields import get_custom_fields
 
 def after_install():
 	setup_custom_fields()
+	seed_from_legacy_configuration()
 
 
 def after_migrate():
 	setup_custom_fields()
+	seed_from_legacy_configuration()
+
+
+def seed_from_legacy_configuration():
+	"""Build the Tax Withholding Categories and customer rows from the old setup.
+
+	Runs on every install and every migrate, so `bench update` alone is enough --
+	no one has to remember a manual step, and a company or customer configured
+	after the first deploy still gets picked up. The seeding is idempotent and
+	additive, and it never changes a company's mode, so repeating it is free and
+	changes no accounting.
+
+	This replaced the one-shot patches: a patch that has already been logged
+	never runs again, which is exactly how the first (broken) seeding stayed
+	invisible on an updated site.
+	"""
+	# Imported here rather than at module scope: this runs during install, when
+	# the app's own doctypes may not be importable yet on a fresh site.
+	from isoft_angola_tax_compliance.migrate_legacy import autorun
+
+	if not frappe.db.exists("DocType", "Party Tax Withholding"):
+		return None
+
+	return autorun()
 
 
 def setup_custom_fields():

@@ -1,2 +1,9 @@
-isoft_angola_tax_compliance.patches.migrate_legacy_withholding
-isoft_angola_tax_compliance.patches.remigrate_legacy_withholding
+# Seeding from the legacy configuration is NOT a patch.
+#
+# A patch runs once and is then logged as done forever. The first version of
+# that seeding could not read the old fields and silently migrated nothing --
+# and because it was logged, no later `bench migrate` would ever retry it.
+#
+# It now runs from the after_install / after_migrate hooks instead, so every
+# `bench update` re-checks and picks up anything new. It is idempotent and
+# additive, so running it every time costs nothing.

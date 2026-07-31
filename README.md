@@ -178,8 +178,19 @@ updated rather than skipped, so definition changes still propagate.
 ## Migrating the legacy configuration
 
 `migrate_legacy.py` converts the old setup into categories and customer rows.
-It runs automatically once on `bench migrate` via
-`patches/migrate_legacy_withholding.py`.
+It runs **automatically on every install and every migrate** from the
+`after_install` / `after_migrate` hooks, so `bench update` on its own is enough
+and a company or customer configured later still gets picked up.
+
+It is deliberately *not* a patch. A patch runs once and is logged as done
+forever — which is precisely how the first, broken version of this seeding
+stayed invisible: it could not read the old fields, migrated nothing, and no
+later `bench migrate` would ever retry it.
+
+Output stays out of the way: one line when there is nothing to do, one line
+when a config issue is outstanding, and the full report only when something was
+actually created. Failures are logged and reported but never abort a migrate — a
+seeding step must not be able to break every future update.
 
 | Legacy | Becomes |
 |---|---|

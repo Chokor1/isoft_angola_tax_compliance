@@ -192,6 +192,57 @@ def execute(dry_run=False):
 	return _run(dry_run=dry_run)
 
 
+def autorun():
+	"""Entry point for the install / migrate hooks.
+
+	Runs the seeding on every `bench install-app` and every `bench migrate`, so
+	a `bench update` picks up newly-flagged customers or a newly-configured
+	company without anyone remembering to run anything.
+
+	Two behaviours differ from the manual entry points:
+
+	* Quiet when there is nothing to do -- one line instead of the full report,
+	  so it does not bury the rest of a `bench update`. The moment it actually
+	  creates something, or has a warning, the whole report is printed.
+	* Never aborts. A configuration-seeding step must not be able to break every
+	  future update, so failures are logged and reported loudly but swallowed.
+	  Run `migrate_legacy.plan` to see the traceback in context.
+	"""
+	import contextlib
+	import io
+
+	buffer = io.StringIO()
+
+	try:
+		with contextlib.redirect_stdout(buffer):
+			actions = _run(dry_run=False)
+	except Exception:
+		print(buffer.getvalue())
+		frappe.log_error(frappe.get_traceback(), "Angola withholding legacy seeding")
+		print("  !! Angola withholding: legacy seeding FAILED. Nothing was changed by it.")
+		print("     Diagnose with: bench --site <site> execute "
+			"isoft_angola_tax_compliance.migrate_legacy.plan")
+		return None
+
+	created = any(actions[key] for key in ("categories", "company_rows", "customer_rows"))
+	pending = len(actions["warnings"]) + len(actions["skipped"])
+
+	if created:
+		# Something changed -- show the whole report, this is worth reading.
+		print(buffer.getvalue())
+	elif pending:
+		# Nothing changed but a config issue stands. Keep it to one line: these
+		# conditions persist, and a full report on every `bench update` would
+		# train people to scroll past it.
+		print(f"  Angola withholding: nothing to seed, {pending} item(s) need attention. "
+			"Detail: bench --site <site> execute "
+			"isoft_angola_tax_compliance.migrate_legacy.plan")
+	else:
+		print("  Angola withholding: legacy configuration already seeded, nothing to do.")
+
+	return actions
+
+
 def _run(dry_run):
 	config = get_company_config()
 	customers = get_legacy_customers()
