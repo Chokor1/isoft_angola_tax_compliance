@@ -132,6 +132,32 @@ Rolling back from `Active` is one field.
   outside `if vat_exempt_amount != 0`, so a cativo customer with a zero-VAT
   invoice hits `UnboundLocalError` on submit.
 
+## Installing
+
+```bash
+bench --site <site> install-app isoft_angola_tax_compliance
+```
+
+Installing changes no behaviour: with no settings record a company resolves to
+mode `Off`.
+
+Two of this app's fields — `apply_tax_withholding_on_service` and
+`total_tax_withholding_amount` — exist as **DocFields** on installs whose
+ERPNext still carries the older in-core withholding customization. Frappe
+refuses to create a Custom Field over an existing DocField, so the installer
+detects that case and skips those two, printing:
+
+```
+skipping custom field Sales Invoice.apply_tax_withholding_on_service:
+a DocField of that name already exists
+```
+
+This is correct, not a workaround: the field is already present and writable, so
+the engine works unchanged. Once the DocField is removed from ERPNext, the next
+`bench migrate` finds the name free and creates the Custom Field, taking
+ownership with no further action. Custom Fields this app already owns are
+updated rather than skipped, so definition changes still propagate.
+
 ## Configuration
 
 1. **Accounts** — one asset account per regime, e.g. `3419 Imposto Industrial
