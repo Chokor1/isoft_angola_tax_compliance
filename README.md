@@ -182,7 +182,14 @@ updated rather than skipped, so definition changes still propagate.
    | Rule | Matches |
    |---|---|
    | All Non-Stock Items | every item with `is_stock_item = 0` |
-   | Item Groups | the listed groups, optionally including nested ones |
+   | Item Groups | the listed groups |
+
+   Each item group row carries two qualifiers:
+
+   - **Maintain Stock** — `Any`, `No` or `Yes`. A services group routinely holds
+     both kinds (boxed software beside the support contract), so "the group"
+     alone is often too blunt.
+   - **Include Child Groups** — also match groups nested underneath.
 
    A group rule beats the non-stock rule, and among group rules the nearest
    ancestor of the item's group wins. That ordering is deliberate: *non-stock*

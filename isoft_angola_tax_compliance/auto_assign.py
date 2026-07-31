@@ -40,6 +40,21 @@ APPLIES_TO_FIELD = "atc_applies_to"
 
 MAX_GROUP_DEPTH = 20
 
+# `Maintain Stock` on a group row: take the whole group, or only its stock or
+# non-stock half. A services group routinely holds both -- boxed software beside
+# the support contract -- so "the group" alone is often too blunt.
+ANY = "Any"
+STOCK_YES = "Yes"
+STOCK_NO = "No"
+
+
+def _stock_matches(setting, is_stock_item):
+	if setting == STOCK_YES:
+		return bool(is_stock_item)
+	if setting == STOCK_NO:
+		return not is_stock_item
+	return True
+
 
 def get_rules():
 	"""Every category that claims items, with its rule.
@@ -70,7 +85,11 @@ def get_rules():
 				"category": name,
 				"non_stock": bool(doc.get(NON_STOCK_FIELD)),
 				"groups": [
-					{"item_group": r.item_group, "include_children": bool(r.include_child_groups)}
+					{
+						"item_group": r.item_group,
+						"include_children": bool(r.include_child_groups),
+						"maintain_stock": r.get("maintain_stock") or ANY,
+					}
 					for r in (doc.get(GROUPS_FIELD) or [])
 					if r.item_group
 				],
@@ -78,6 +97,18 @@ def get_rules():
 		)
 
 	return rules
+
+
+def _describe_group(entry):
+	"""Human-readable form of one group rule row."""
+	label = entry["item_group"]
+	if entry.get("maintain_stock") == STOCK_NO:
+		label += " (non-stock)"
+	elif entry.get("maintain_stock") == STOCK_YES:
+		label += " (stock)"
+	if entry.get("include_children"):
+		label += "*"
+	return label
 
 
 def _ancestors(item_group):
@@ -118,6 +149,9 @@ def resolve(item_group=None, is_stock_item=None, rules=None):
 			distance = chain.index(group)
 			if distance > 0 and not entry["include_children"]:
 				# Listed as an exact group only; the item sits below it.
+				continue
+
+			if not _stock_matches(entry["maintain_stock"], is_stock_item):
 				continue
 
 			if best is None or distance < best[0]:
@@ -195,9 +229,7 @@ def diagnose(item=None, item_group=None):
 	rules = get_rules()
 	print(f"\n  3. usable rules : {len(rules)}")
 	for rule in rules:
-		groups = ", ".join(
-			g["item_group"] + ("*" if g["include_children"] else "") for g in rule["groups"]
-		)
+		groups = ", ".join(_describe_group(g) for g in rule["groups"])
 		print(f"       {rule['category']}")
 		print(f"           all non-stock : {rule['non_stock']}")
 		print(f"           item groups   : {groups or '-'}      (* = includes child groups)")
@@ -254,9 +286,7 @@ def compute_backfill(category=None, sample=10):
 			{
 				"category": r["category"],
 				"non_stock": r["non_stock"],
-				"groups": [
-					g["item_group"] + ("*" if g["include_children"] else "") for g in r["groups"]
-				],
+				"groups": [_describe_group(g) for g in r["groups"]],
 			}
 			for r in rules
 		],

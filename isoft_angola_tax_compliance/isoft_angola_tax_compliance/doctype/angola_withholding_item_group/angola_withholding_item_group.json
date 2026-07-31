@@ -6,11 +6,12 @@
  "engine": "InnoDB",
  "field_order": [
   "item_group",
+  "maintain_stock",
   "include_child_groups"
  ],
  "fields": [
   {
-   "columns": 7,
+   "columns": 5,
    "fieldname": "item_group",
    "fieldtype": "Link",
    "in_list_view": 1,
@@ -20,6 +21,17 @@
   },
   {
    "columns": 3,
+   "default": "Any",
+   "description": "Narrow the group to stock or non-stock items. 'Any' takes the whole group.",
+   "fieldname": "maintain_stock",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Maintain Stock",
+   "options": "Any\nNo\nYes",
+   "reqd": 1
+  },
+  {
+   "columns": 2,
    "default": "1",
    "description": "Also match items in groups nested under this one.",
    "fieldname": "include_child_groups",
