@@ -16,7 +16,6 @@ different things:
                  -> Item.atc_tax_withholding_category
                  -> Item.tax_withholding_category                 (legacy field)
                  -> Item Group tree, walking up to the root
-                 -> Angola Tax Compliance Settings default
 
 The legacy fallbacks exist so the resolver keeps working both before and after
 the core ERPNext fields are removed in the cleanup phase.
@@ -24,8 +23,6 @@ the core ERPNext fields are removed in the cleanup phase.
 
 import frappe
 from frappe.utils import getdate
-
-from isoft_angola_tax_compliance.withholding.settings import get_settings
 
 # Custom fields owned by this app.
 ITEM_CATEGORY_FIELD = "atc_tax_withholding_category"
@@ -93,7 +90,7 @@ def get_party_categories(doc):
 	return categories
 
 
-def resolve_item_category(item_row, settings=None):
+def resolve_item_category(item_row):
 	"""Resolve the withholding category for one invoice line."""
 	category = item_row.get(INVOICE_ITEM_CATEGORY_FIELD) or item_row.get(
 		LEGACY_INVOICE_ITEM_CATEGORY_FIELD
@@ -113,20 +110,14 @@ def resolve_item_category(item_row, settings=None):
 		if category:
 			return category
 
-	if settings:
-		return settings.default_service_withholding_category
-
 	return None
 
 
-def get_item_categories(doc, settings=None):
+def get_item_categories(doc):
 	"""Map category -> [invoice line, ...] for every line that resolves one."""
-	if settings is None:
-		settings = get_settings(doc.get("company"))
-
 	mapping = {}
 	for item_row in doc.get("items") or []:
-		category = resolve_item_category(item_row, settings)
+		category = resolve_item_category(item_row)
 		if category:
 			mapping.setdefault(category, []).append(item_row)
 

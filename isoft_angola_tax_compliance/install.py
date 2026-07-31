@@ -2,26 +2,92 @@
 # For license information, please see license.txt
 """Install / migrate hooks.
 
-Deliberately does NOT create any Angola Tax Compliance Settings record. A
-company with no settings row resolves to mode Off, so installing this app
-changes nothing about how the site behaves until someone explicitly opts a
-company into Shadow.
+The engine has no settings doctype: it applies to any company whose country is
+Angola, because retencao na fonte and IVA cativo are Angolan law rather than a
+preference. Installing on a site with no Angolan company therefore changes
+nothing.
 """
 
 import frappe
 from frappe.custom.doctype.custom_field.custom_field import create_custom_fields
+from frappe.custom.doctype.property_setter.property_setter import make_property_setter
 
 from isoft_angola_tax_compliance.custom_fields import get_custom_fields
 
 
 def after_install():
 	setup_custom_fields()
+	remove_retired_doctypes()
+	hide_superseded_core_fields()
 	seed_from_legacy_configuration()
 
 
 def after_migrate():
 	setup_custom_fields()
+	remove_retired_doctypes()
+	hide_superseded_core_fields()
 	seed_from_legacy_configuration()
+
+
+# Doctypes this app used to ship and has since dropped. Deleting the folder does
+# not delete the DocType record, and a standard doctype whose Python module is
+# gone makes Frappe raise ImportError the moment anyone opens its list view --
+# the same failure the abandoned `Tax Withholding` doctype causes. Removing them
+# here keeps the app from leaving that trap behind.
+RETIRED_DOCTYPES = [
+	# Replaced by the country rule: any company in Angola is subject to
+	# withholding, so there was nothing left for this to configure.
+	"Angola Tax Compliance Settings",
+	# Recorded the legacy figure beside the new one during the cutover. The
+	# legacy path no longer exists, so there is nothing to compare against.
+	"Withholding Comparison Log",
+]
+
+
+def remove_retired_doctypes():
+	removed = []
+	for doctype in RETIRED_DOCTYPES:
+		if not frappe.db.exists("DocType", doctype):
+			continue
+
+		# delete_doc drops the table itself; issuing DDL here as well would trip
+		# Frappe's implicit-commit guard during migrate.
+		frappe.delete_doc("DocType", doctype, force=True, ignore_permissions=True)
+		removed.append(doctype)
+
+	if removed:
+		frappe.db.commit()
+		print(f"  Angola withholding: removed retired doctype(s) {removed}")
+
+	return removed
+
+
+# Core ERPNext fields this app supersedes, hidden via Property Setter rather
+# than removed: they belong to upstream TDS/TCS, which is simply not the Angolan
+# mechanism. Hiding is reversible and touches no ERPNext file.
+SUPERSEDED_FIELDS = [
+	# Was gated on the fork's `withholding_tax` select. That select is gone, so
+	# the field became permanently visible and sits confusingly next to the
+	# `Angolan Withholding` table that actually drives the engine.
+	("Customer", "tax_withholding_category"),
+]
+
+
+def hide_superseded_core_fields():
+	for doctype, fieldname in SUPERSEDED_FIELDS:
+		if not frappe.db.exists("DocType", doctype):
+			continue
+
+		field = frappe.get_meta(doctype, cached=False).get_field(fieldname)
+		if not field or field.get("is_custom_field"):
+			# Absent, or owned by someone else -- leave it alone.
+			continue
+
+		make_property_setter(
+			doctype, fieldname, "hidden", 1, "Check", validate_fields_for_doctype=False
+		)
+
+	frappe.clear_cache()
 
 
 def seed_from_legacy_configuration():

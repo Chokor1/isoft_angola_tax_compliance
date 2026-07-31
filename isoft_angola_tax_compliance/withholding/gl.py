@@ -25,14 +25,14 @@ from frappe.utils import cint, flt
 
 from erpnext.accounts.utils import get_account_currency
 
-from isoft_angola_tax_compliance.withholding.settings import is_active
+from isoft_angola_tax_compliance.withholding.settings import is_enabled
 
 WITHHOLDING_TABLE_FIELD = "atc_withholdings"
 
 
 def add_withholding_gl_entries(doc, gl_entries):
-	"""Append the withholding entries. No-op unless the engine is Active."""
-	if not is_active(doc.get("company")):
+	"""Append the withholding entries. No-op for non-Angolan companies."""
+	if not is_enabled(doc.get("company")):
 		return gl_entries
 
 	rows = doc.get(WITHHOLDING_TABLE_FIELD) or []

@@ -7,7 +7,7 @@ from frappe import _
 from frappe.utils import flt
 
 from isoft_angola_tax_compliance.withholding import engine
-from isoft_angola_tax_compliance.withholding.settings import is_active, is_enabled
+from isoft_angola_tax_compliance.withholding.settings import is_enabled
 
 TABLE_FIELD = "atc_withholdings"
 TOTAL_FIELD = "atc_total_withholding_amount"
@@ -59,14 +59,12 @@ def set_withholdings(doc, method=None):
 
 	_set_item_amounts(doc, rows)
 
-	if is_active(doc.get("company")):
-		_sync_legacy_reference_fields(doc, rows)
+	_sync_legacy_reference_fields(doc, rows)
 
+	# A misconfigured category is a hard error: the alternative is booking a
+	# silently wrong amount, or none at all, on a fiscal document.
 	for message in result["messages"]:
-		if is_active(doc.get("company")):
-			frappe.throw(message, title=_("Withholding Configuration"))
-		else:
-			frappe.log_error(message, "Angola withholding (shadow)")
+		frappe.throw(message, title=_("Withholding Configuration"))
 
 
 def _sync_legacy_reference_fields(doc, rows):
@@ -100,11 +98,9 @@ def _set_item_amounts(doc, rows):
 		item.set(field, 0)
 
 	from isoft_angola_tax_compliance.withholding import resolver
-	from isoft_angola_tax_compliance.withholding.settings import get_settings
 
-	settings = get_settings(doc.get("company"))
 	by_category = {r["tax_withholding_category"]: r for r in rows}
-	item_map = resolver.get_item_categories(doc, settings)
+	item_map = resolver.get_item_categories(doc)
 
 	for category, items in item_map.items():
 		row = by_category.get(category)

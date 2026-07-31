@@ -22,7 +22,7 @@ from frappe import _
 from frappe.utils import flt, getdate
 
 from isoft_angola_tax_compliance.withholding import resolver
-from isoft_angola_tax_compliance.withholding.settings import applies_to_document, get_settings
+from isoft_angola_tax_compliance.withholding.settings import applies_to_document
 
 # Custom fields this app adds to Tax Withholding Category.
 TYPE_FIELD = "atc_withholding_type"
@@ -46,9 +46,10 @@ BASE_ORDER = {BASE_ITEM_NET: 0, BASE_TAX_AMOUNT: 1, BASE_GRAND_TOTAL: 2}
 def evaluate(doc):
 	"""Return {"rows": [...], "messages": [...]} for a Sales Invoice.
 
-	Never raises: a misconfiguration produces a message, not a failed submit.
-	The caller decides whether messages are surfaced (Shadow) or thrown
-	(Active), so turning the engine on can never block invoicing by surprise.
+	Never raises: a misconfiguration is returned as a message rather than an
+	exception, so the caller decides how to surface it. `apply.set_withholdings`
+	throws, because booking a silently wrong amount on a fiscal document is
+	worse than refusing to submit.
 	"""
 	result = {"rows": [], "messages": []}
 
@@ -63,7 +64,6 @@ def evaluate(doc):
 		# cativo) cannot be evaluated, so the total would be silently short.
 		return result
 
-	settings = get_settings(doc.get("company"))
 	posting_date = getdate(resolver.get_posting_date(doc))
 	precision = doc.precision("grand_total") or 2
 
@@ -72,7 +72,7 @@ def evaluate(doc):
 	for category in resolver.get_party_categories(doc):
 		candidates.setdefault(category, {"category": category, "items": [], "party": True})
 
-	for category, items in resolver.get_item_categories(doc, settings).items():
+	for category, items in resolver.get_item_categories(doc).items():
 		entry = candidates.setdefault(category, {"category": category, "items": [], "party": False})
 		entry["items"] = items
 
@@ -221,7 +221,7 @@ def _get_cumulative_base(doc, category, from_date, to_date):
 
 	Only counts invoices booked by this engine. Invoices predating the app are
 	not included, so a cumulative threshold spanning the cutover will start
-	from zero -- deliberate, and noted in the shadow comparison.
+	from zero -- deliberate.
 	"""
 	customer = resolver.get_customer(doc)
 	if not (from_date and to_date and customer):

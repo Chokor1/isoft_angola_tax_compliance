@@ -1,87 +1,57 @@
 # Copyright (c) 2026, ISOFT and contributors
 # For license information, please see license.txt
-"""Per-company mode switch for the Angolan withholding engine.
+"""When does the withholding engine apply?
 
-Mode semantics
---------------
-Off     engine does nothing at all; the legacy core path owns everything.
-Shadow  engine computes and stores its result on the invoice and writes a
-        Withholding Comparison Log row, but posts NO GL entries and does NOT
-        suppress the legacy path. Behaviour of the site is unchanged.
-Active  engine posts the withholding GL inside the invoice and the legacy
-        core methods are neutralised by the Sales Invoice override.
+There is no settings doctype and no mode. Retencao na fonte and IVA cativo are
+Angolan law, so the condition is simply the company's country:
+
+    Company.country == "Angola"  ->  the engine computes and books.
+
+The only per-document switch left is POS, because a shop may legitimately not
+want withholding on counter sales; that lives on the POS Profile.
 """
 
 import frappe
 
-SETTINGS_DOCTYPE = "Angola Tax Compliance Settings"
-
-OFF = "Off"
-SHADOW = "Shadow"
-ACTIVE = "Active"
-
-
-def get_settings(company):
-	"""Return the settings doc for a company, or None when not configured."""
-	if not company:
-		return None
-
-	name = frappe.db.exists(SETTINGS_DOCTYPE, {"company": company})
-	if not name:
-		return None
-
-	return frappe.get_cached_doc(SETTINGS_DOCTYPE, name)
-
-
-def get_mode(company):
-	settings = get_settings(company)
-	if not settings:
-		return OFF
-
-	return settings.mode or OFF
-
-
-def is_enabled(company):
-	"""True when the engine should compute (Shadow or Active)."""
-	return get_mode(company) in (SHADOW, ACTIVE)
-
-
-def is_active(company):
-	"""True only when the engine owns the accounting."""
-	return get_mode(company) == ACTIVE
-
-
+ANGOLA = "Angola"
 POS_PROFILE_FIELD = "atc_enable_withholding"
 
 
+def is_enabled(company):
+	"""True when this company is subject to Angolan withholding."""
+	if not company:
+		return False
+
+	return frappe.get_cached_value("Company", company, "country") == ANGOLA
+
+
 def applies_to_document(doc):
-	"""Gate a specific document: mode on, plus the per-doctype rules below."""
-	settings = get_settings(doc.get("company"))
-	if not settings or (settings.mode or OFF) == OFF:
+	"""Gate a specific document."""
+	company = doc.get("company")
+	if not is_enabled(company):
 		return False
 
 	if doc.get("doctype") == "Quotation":
-		# Quotations never post GL -- this is a quoted figure only, so it is
-		# shown in every mode the engine is on, including Shadow.
-		return bool(settings.get("apply_on_quotation"))
+		# A Quotation posts no GL; the figure is quoted, never booked.
+		return True
 
 	if doc.get("is_pos"):
-		return pos_withholding_enabled(doc.get("pos_profile"), settings)
+		return pos_withholding_enabled(doc.get("pos_profile"))
 
 	return True
 
 
-def pos_withholding_enabled(pos_profile=None, settings=None):
-	"""Is withholding enabled for POS?
+def pos_withholding_enabled(pos_profile=None):
+	"""Is withholding enabled for this POS Profile?
 
-	The POS Profile checkbox is the authority when it is set, so a shop can be
-	switched on or off independently of the rest of the company. The
-	company-wide `apply_on_pos` is only the fallback for profiles that predate
-	the field or have it unset.
+	Off by default: a counter sale to a walk-in customer is the common case, and
+	silently withholding on it would be worse than not offering it. Tick
+	`Enable Withholding` on the profile for shops that need it.
 	"""
-	if pos_profile and frappe.get_meta("POS Profile").get_field(POS_PROFILE_FIELD):
-		value = frappe.db.get_value("POS Profile", pos_profile, POS_PROFILE_FIELD)
-		if value is not None:
-			return bool(int(value or 0))
+	if not pos_profile:
+		return False
 
-	return bool(settings and settings.apply_on_pos)
+	if not frappe.get_meta("POS Profile").get_field(POS_PROFILE_FIELD):
+		return False
+
+	return bool(int(frappe.db.get_value("POS Profile", pos_profile, POS_PROFILE_FIELD) or 0))

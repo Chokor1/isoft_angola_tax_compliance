@@ -99,38 +99,40 @@ has been removed along with the legacy code it was suppressing.
 > not reach it. POS Awesome issues Sales Invoice with `is_pos = 1`, which is
 > covered — see the POS section.
 
-## Modes
+## When it applies
 
-Set per company in **Angola Tax Compliance Settings**. No settings record for a
-company means `Off`, so installing this app changes nothing.
+There is no settings doctype and no mode. Retenção na fonte and IVA cativo are
+Angolan law, so the condition is the company's country:
 
-| Mode | Engine computes | Posts GL | Withholding happens |
-|---|---|---|---|
-| `Off` | no | no | **none at all** |
-| `Shadow` | yes | **no** | computed and stored, not booked |
-| `Active` | yes | yes | booked inside the invoice |
+```
+Company.country == "Angola"   ->   the engine computes and books
+```
 
-**Shadow** computes and stores without posting any GL. Before the legacy path
-was deleted it also recorded both numbers side by side in
-`Withholding Comparison Log`; that comparison is now vestigial (see above).
-Rolling back from `Active` is one field.
+Nothing to switch on, nothing to forget. A company anywhere else is untouched,
+so installing on a multi-country bench is safe.
 
-### Defects in the removed legacy path (historical record)
+The one remaining switch is POS, on the **POS Profile**, because a shop may
+legitimately not want withholding on counter sales. It is off by default.
 
-- IVA cativo is computed on `total_taxes_and_charges`, i.e. the **whole** taxes
-  table — any freight / imposto de selo / rounding row gets withheld too.
-- Retenção uses `is_stock_item = 0` as its definition of "service", and
-  `item.amount` instead of `net_amount`.
-- Both rates are hardcoded, so no dated rate applies.
-- The retenção JE posts at `nowdate()`, not the invoice posting date.
-- FX invoices are booked at exchange rate 1.
-- The retenção JE hardcodes `cost_center: None`, so on a non-default company it
-  picks up the session default and fails with a cross-company cost centre error.
-- Cancelling an invoice does **not** cancel its retenção JE — the JE is left
-  submitted, crediting the receivable, producing a phantom customer credit.
-- `apply_vat_exemption` has an indentation bug: `journal_entry.insert()` sits
-  outside `if vat_exempt_amount != 0`, so a cativo customer with a zero-VAT
-  invoice hits `UnboundLocalError` on submit.
+A misconfigured category — no rate in force, no account for the company, no base
+tax account for cativo — raises on submit rather than booking a silently wrong
+amount on a fiscal document.
+
+### Superseded core fields
+
+`Customer.tax_withholding_category` is hidden by a Property Setter. It belongs to
+upstream ERPNext TDS/TCS, which is not the Angolan mechanism; the
+**Angolan Withholding** table on the customer is what drives this engine.
+Hiding is reversible and touches no ERPNext file.
+
+### Abandoned doctypes
+
+`Tax Withholding` and `Tax Withholding Item` are left over from an unfinished
+item-based experiment. They were created as *standard* doctypes in ERPNext's
+`Accounts` module, so Frappe looks for a Python module that no longer exists and
+opening the list view raises `ImportError`. `cleanup.py` reports them, can stop
+the crash without touching data, and can remove them outright — explicitly, never
+from a hook, because dropping a table must not be a side effect of `bench update`.
 
 ## Installing
 

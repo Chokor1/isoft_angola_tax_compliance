@@ -1,126 +1,21 @@
 # Copyright (c) 2026, ISOFT and contributors
 # For license information, please see license.txt
-"""Shadow-mode reconciliation: legacy Journal Entries vs the new engine.
+"""Reads what the legacy Journal Entries posted, for invoices predating the engine.
 
-While the site runs in Shadow mode the legacy core path still creates its
-Journal Entries and the new engine posts nothing. This module records both
-numbers side by side so every difference can be explained before anyone
-switches a company to Active.
+This module used to also write a `Withholding Comparison Log` during the
+Shadow-mode cutover, recording the legacy figure beside the new one. The legacy
+path has since been deleted from ERPNext, so there is nothing left to compare
+against and that logging is gone.
 
-Expect non-zero deltas at first. Known legacy defects that will show up here:
-
-  * IVA cativo is computed on `total_taxes_and_charges`, i.e. the WHOLE taxes
-    table, so any freight / imposto de selo / rounding row is withheld too.
-  * Retencao II uses `is_stock_item = 0` as its definition of "service", and
-    `item.amount` instead of `net_amount`.
-  * Both legacy paths hardcode their rates, so no dated rate applies.
-  * The legacy retencao JE posts at `nowdate()`, not the invoice posting date.
-  * FX invoices are booked at exchange rate 1.
-
-A delta is therefore not automatically a bug in the new engine -- read the
-`details` field, which records the engine's own breakdown.
+What remains is still needed: `api.get_withholdings()` falls back to these
+readers so a SAF-T or AGT re-export of a pre-cutover period still declares the
+withholding that was actually booked at the time.
 """
-
-import json
 
 import frappe
 from frappe.utils import flt
 
-from isoft_angola_tax_compliance.withholding.settings import SHADOW, get_mode, get_settings
-
-LOG_DOCTYPE = "Withholding Comparison Log"
 LEGACY_TOTAL_FIELD = "total_tax_withholding_amount"
-TABLE_FIELD = "atc_withholdings"
-
-TOLERANCE = 0.01
-
-
-def log_comparison(doc):
-	"""Upsert one comparison row for a submitted Sales Invoice."""
-	if get_mode(doc.get("company")) != SHADOW:
-		return
-
-	settings = get_settings(doc.company)
-	if not settings or not settings.log_comparison:
-		return
-
-	try:
-		_write_log(doc)
-	except Exception:
-		# Never let a diagnostic break a submit.
-		frappe.log_error(frappe.get_traceback(), "Angola withholding comparison log")
-
-
-def _write_log(doc):
-	legacy = get_legacy_amounts(doc.name, doc.company)
-
-	rows = doc.get(TABLE_FIELD) or []
-	new_ii = sum(flt(r.base_withholding_amount) for r in rows if r.withholding_type == "II")
-	new_iva = sum(flt(r.base_withholding_amount) for r in rows if r.withholding_type == "IVA")
-
-	ii_delta = flt(new_ii - legacy["ii"], 2)
-	iva_delta = flt(new_iva - legacy["iva"], 2)
-
-	values = {
-		"sales_invoice": doc.name,
-		"company": doc.company,
-		"customer": doc.customer,
-		"posting_date": doc.posting_date,
-		"legacy_ii_amount": legacy["ii"],
-		"new_ii_amount": new_ii,
-		"ii_delta": ii_delta,
-		"legacy_iva_amount": legacy["iva"],
-		"new_iva_amount": new_iva,
-		"iva_delta": iva_delta,
-		"status": _status(legacy, new_ii, new_iva, ii_delta, iva_delta),
-		"details": json.dumps(
-			{
-				"engine_rows": [
-					{
-						"category": r.tax_withholding_category,
-						"type": r.withholding_type,
-						"rate": r.rate,
-						"base": r.base_taxable_amount,
-						"amount": r.base_withholding_amount,
-						"account": r.account_head,
-					}
-					for r in rows
-				],
-				"legacy_journal_entries": legacy["vouchers"],
-				"grand_total": doc.base_grand_total,
-				"total_taxes_and_charges": doc.base_total_taxes_and_charges,
-				"currency": doc.currency,
-				"conversion_rate": doc.conversion_rate,
-			},
-			indent=2,
-			default=str,
-		),
-	}
-
-	existing = frappe.db.exists(LOG_DOCTYPE, doc.name)
-	if existing:
-		log = frappe.get_doc(LOG_DOCTYPE, existing)
-		log.update(values)
-		log.save(ignore_permissions=True)
-	else:
-		log = frappe.get_doc(dict(doctype=LOG_DOCTYPE, **values))
-		log.insert(ignore_permissions=True)
-
-
-def _status(legacy, new_ii, new_iva, ii_delta, iva_delta):
-	legacy_total = flt(legacy["ii"]) + flt(legacy["iva"])
-	new_total = flt(new_ii) + flt(new_iva)
-
-	if not legacy_total and not new_total:
-		return "Both Zero"
-	if not legacy_total:
-		return "New Only"
-	if not new_total:
-		return "Legacy Only"
-	if abs(ii_delta) <= TOLERANCE and abs(iva_delta) <= TOLERANCE:
-		return "Match"
-
-	return "Mismatch"
 
 
 def get_legacy_amounts(invoice, company):
