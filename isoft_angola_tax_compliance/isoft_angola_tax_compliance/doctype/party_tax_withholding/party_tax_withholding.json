@@ -12,7 +12,7 @@
  ],
  "fields": [
   {
-   "columns": 4,
+   "columns": 6,
    "fieldname": "tax_withholding_category",
    "fieldtype": "Link",
    "in_list_view": 1,
@@ -21,24 +21,24 @@
    "reqd": 1
   },
   {
-   "columns": 2,
+   "columns": 3,
    "fieldname": "valid_from",
    "fieldtype": "Date",
    "in_list_view": 1,
    "label": "Valid From"
   },
   {
-   "columns": 2,
+   "columns": 3,
    "fieldname": "valid_to",
    "fieldtype": "Date",
    "in_list_view": 1,
    "label": "Valid To"
   },
   {
-   "columns": 3,
+   "description": "Kept for provenance only. The seeding writes where a row came from; nothing reads it.",
    "fieldname": "reference",
    "fieldtype": "Data",
-   "in_list_view": 1,
+   "hidden": 1,
    "label": "Certificate / Despacho"
   }
  ],
