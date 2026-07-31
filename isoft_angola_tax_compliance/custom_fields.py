@@ -127,24 +127,30 @@ def get_custom_fields():
 			},
 		],
 		"Customer": [
+			# Unlabelled section break, not a titled section: a Table rendered
+			# inside the second column of the basic-info block comes out at half
+			# width. This gives the grid the full row, directly under the party
+			# and tax details, with no heading of its own.
 			{
 				"fieldname": "atc_withholding_section",
 				"fieldtype": "Section Break",
-				"label": "Angolan Withholding",
-				"insert_after": _anchor("Customer", ["tax_withholding_category", "tax_id"]),
-				"collapsible": 1,
+				"insert_after": _anchor(
+					"Customer", ["represents_company", "tax_category", "tax_id"]
+				),
+				# Set explicitly, not merely omitted: create_custom_fields updates an
+				# existing record with `doc.update(df)`, which only writes the keys
+				# present. Leaving these out would keep the old heading and the
+				# collapsed state on sites that already have this field.
+				"label": "",
+				"collapsible": 0,
 			},
 			{
 				"fieldname": "atc_withholdings",
 				"fieldtype": "Table",
-				"label": "Withholdings",
+				"label": "Withholdings (Retenção / IVA Cativo)",
 				"options": "Party Tax Withholding",
 				"insert_after": "atc_withholding_section",
-				"description": (
-					"A customer can be subject to several regimes at once, e.g. IVA cativo 50% "
-					"and retencao na fonte II. Close valid_to instead of deleting a row when a "
-					"dispensa is granted."
-				),
+				"description": "Several regimes can apply at once. Close Valid To rather than deleting a row.",
 			},
 		],
 		"Item": [
