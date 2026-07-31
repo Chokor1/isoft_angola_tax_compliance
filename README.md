@@ -203,6 +203,17 @@ updated rather than skipped, so definition changes still propagate.
    The dry run prints the rules, how many items have no category, and which ones
    each rule would claim. Only empty fields are filled; a value set by hand is
    never overwritten.
+
+   If an item did not get a category, ask why rather than guess:
+
+   ```bash
+   bench --site <site> execute isoft_angola_tax_compliance.auto_assign.diagnose \
+       --kwargs '{"item": "SRV-004"}'
+   ```
+
+   It walks the whole chain — are the rule fields migrated, is the checkbox
+   ticked, is the scope `Item Based`, what is the item's group ancestry, what
+   would a rule assign — and names the reason.
 5. **Angola Tax Compliance Settings** — set the company's mode.
 
 ## Migrating the legacy configuration

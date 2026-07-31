@@ -155,6 +155,89 @@ def apply_to_item(doc, method=None):
 		doc.set(CATEGORY_FIELD, category)
 
 
+def diagnose(item=None, item_group=None):
+	"""Why did an item not get a category? Reports every link in the chain.
+
+		bench --site <site> execute isoft_angola_tax_compliance.auto_assign.diagnose \\
+			--kwargs '{"item": "SRV-004"}'
+	"""
+	print("=" * 74)
+	print("  AUTO-ASSIGN DIAGNOSTIC")
+	print("=" * 74)
+
+	# 1. is the code even deployed?
+	meta = frappe.get_meta("Tax Withholding Category", cached=False)
+	fields_present = all(meta.get_field(f) for f in (AUTO_FIELD, NON_STOCK_FIELD, GROUPS_FIELD))
+	print(f"\n  1. rule fields on Tax Withholding Category : {'yes' if fields_present else 'NO'}")
+	if not fields_present:
+		print("       -> the app is not migrated on this site. Run `bench migrate`, then")
+		print("          `bench restart` (workers preload, so code changes need it).")
+		return {"deployed": False}
+
+	print(f"     Item.{CATEGORY_FIELD} exists              : "
+		f"{'yes' if frappe.get_meta('Item').get_field(CATEGORY_FIELD) else 'NO'}")
+
+	# 2. which categories actually claim items?
+	enabled = frappe.get_all(
+		"Tax Withholding Category",
+		filters={AUTO_FIELD: 1},
+		fields=["name", APPLIES_TO_FIELD, NON_STOCK_FIELD],
+	)
+	print(f"\n  2. categories with 'Auto-assign to New Items' ticked : {len(enabled)}")
+	for row in enabled:
+		scope = row.get(APPLIES_TO_FIELD)
+		note = "" if (scope or SCOPE_ITEM) == SCOPE_ITEM else f"   !! scope is '{scope}', not Item Based -- IGNORED"
+		print(f"       {row.name}{note}")
+	if not enabled:
+		print("       -> nothing will ever be stamped. Tick it on the category.")
+		print("          The section only shows when Scope is 'Item Based'.")
+
+	rules = get_rules()
+	print(f"\n  3. usable rules : {len(rules)}")
+	for rule in rules:
+		groups = ", ".join(
+			g["item_group"] + ("*" if g["include_children"] else "") for g in rule["groups"]
+		)
+		print(f"       {rule['category']}")
+		print(f"           all non-stock : {rule['non_stock']}")
+		print(f"           item groups   : {groups or '-'}      (* = includes child groups)")
+
+	# 4. what would happen for this item / group?
+	if item:
+		row = frappe.db.get_value(
+			"Item", item, ["name", "item_group", "is_stock_item", CATEGORY_FIELD], as_dict=True
+		)
+		if not row:
+			print(f"\n  4. item {item} does not exist")
+			return {"deployed": True, "rules": len(rules)}
+
+		print(f"\n  4. item {row.name}")
+		print(f"       item_group            : {row.item_group}")
+		print(f"       is_stock_item         : {row.is_stock_item}")
+		print(f"       group ancestry        : {' -> '.join(_ancestors(row.item_group)) or '-'}")
+		print(f"       category set today    : {row.get(CATEGORY_FIELD) or '(empty)'}")
+		would = resolve(row.item_group, row.is_stock_item, rules)
+		print(f"       a rule would assign   : {would or '(nothing matches)'}")
+		if row.get(CATEGORY_FIELD):
+			print("       -> already set; auto-assign never overwrites an existing value.")
+		elif would:
+			print("       -> this item pre-dates the rule. Auto-assign only stamps items at")
+			print("          creation; run auto_assign.backfill to fill existing ones.")
+		return {"deployed": True, "rules": len(rules), "would_assign": would}
+
+	if item_group:
+		print(f"\n  4. group {item_group}")
+		print(f"       ancestry : {' -> '.join(_ancestors(item_group)) or '-'}")
+		for stock in (0, 1):
+			print(f"       is_stock_item={stock} -> {resolve(item_group, stock, rules) or '(nothing)'}")
+
+	print("\n  Item groups that exist (check for near-duplicates like Services / SERVICOS):")
+	for group in frappe.get_all("Item Group", filters={"is_group": 0}, pluck="name", limit=40):
+		print(f"       {group}")
+
+	return {"deployed": True, "rules": len(rules)}
+
+
 def backfill(confirm=False, limit=None):
 	"""Apply the rules to existing items. Dry run unless confirm=True.
 
