@@ -51,20 +51,28 @@ VAT_LIQUIDADO_PREFIX = "3453"
 # ---------------------------------------------------------------- inspection
 
 
+def _legacy_column(doctype, column):
+	"""Is the legacy value still readable?
+
+	Deliberately checks the DATABASE COLUMN, not the meta field. By the time
+	this runs the legacy DocFields are usually gone: `bench migrate` syncs
+	DocTypes before it runs patches, so the very deploy that carries this
+	migration is also the one that removes `enable_vat_exemption` and friends
+	from ERPNext. Frappe never drops columns, so the data survives -- but a
+	`meta.get_field()` guard would see nothing and silently migrate nothing.
+	"""
+	return frappe.db.has_column(doctype, column)
+
+
 def get_company_config():
 	"""What each company's legacy defaults map to, plus anything suspicious."""
-	meta = frappe.get_meta("Company")
-	has_iva = bool(meta.get_field(LEGACY_IVA_ACCOUNT_FIELD))
-	has_ii = bool(meta.get_field(LEGACY_II_ACCOUNT_FIELD))
+	has_iva = _legacy_column("Company", LEGACY_IVA_ACCOUNT_FIELD)
+	has_ii = _legacy_column("Company", LEGACY_II_ACCOUNT_FIELD)
 
 	config = {}
 	for company in frappe.get_all("Company", pluck="name"):
-		iva_account = (
-			frappe.db.get_value("Company", company, LEGACY_IVA_ACCOUNT_FIELD) if has_iva else None
-		)
-		ii_account = (
-			frappe.db.get_value("Company", company, LEGACY_II_ACCOUNT_FIELD) if has_ii else None
-		)
+		iva_account = _read_column("Company", company, LEGACY_IVA_ACCOUNT_FIELD) if has_iva else None
+		ii_account = _read_column("Company", company, LEGACY_II_ACCOUNT_FIELD) if has_ii else None
 
 		vat_accounts, vat_source = detect_vat_accounts(company)
 
@@ -130,16 +138,37 @@ def detect_vat_accounts(company):
 	return guessed, "tax_template" if guessed else "none"
 
 
+def _read_column(doctype, name, column):
+	"""Read one legacy column by raw SQL, bypassing meta entirely."""
+	rows = frappe.db.sql(
+		"SELECT `{column}` AS value FROM `tab{doctype}` WHERE name = %s".format(
+			column=column, doctype=doctype
+		),
+		name,
+		as_dict=True,
+	)
+	return rows[0].value if rows else None
+
+
 def get_legacy_customers():
-	"""Customers flagged cativo under the old scheme, grouped by percentage."""
-	if not frappe.get_meta("Customer").get_field("enable_vat_exemption"):
+	"""Customers flagged cativo under the old scheme, grouped by percentage.
+
+	Raw SQL, not `frappe.get_all`: the query builder validates fieldnames
+	against meta, and these fields are no longer in meta once the ERPNext
+	customization is removed. The columns and their data remain.
+	"""
+	if not (_legacy_column("Customer", "enable_vat_exemption")
+			and _legacy_column("Customer", "vat_exemption_percent")):
 		return {}
 
-	rows = frappe.get_all(
-		"Customer",
-		filters={"enable_vat_exemption": 1},
-		fields=["name", "customer_name", "vat_exemption_percent", "disabled"],
-		order_by="name",
+	rows = frappe.db.sql(
+		"""
+		SELECT name, customer_name, vat_exemption_percent, disabled
+		FROM `tabCustomer`
+		WHERE IFNULL(enable_vat_exemption, 0) = 1
+		ORDER BY name
+		""",
+		as_dict=True,
 	)
 
 	grouped = {}
@@ -185,9 +214,23 @@ def _run(dry_run):
 			actions["warnings"].append(f"{company}: {warning}")
 
 	# ---- categories ----------------------------------------------------
+	# The full Angolan set is seeded whenever the company has an account for the
+	# regime -- retencao II 6,5% plus IVA cativo at both 50% and 100%. They are
+	# NOT conditioned on which percentages happen to appear on customers today:
+	# a company that has no 100% customer this month will still have one next
+	# month, and a missing category is a silent under-withholding.
 	needed = {}
 	if any(c["ii_account"] for c in config.values()):
 		needed[CAT_II] = {"type": "II", "base": "Item Net Amount", "scope": "Item Based", "rate": II_RATE}
+
+	if any(c["iva_account"] for c in config.values()):
+		for percent, category in sorted(CAT_IVA.items(), key=lambda kv: int(kv[0])):
+			needed[category] = {
+				"type": "IVA",
+				"base": "Tax Amount",
+				"scope": "Party Based",
+				"rate": flt(percent),
+			}
 
 	for percent in sorted(customers, key=lambda p: int(p)):
 		if percent not in CAT_IVA:
@@ -195,13 +238,6 @@ def _run(dry_run):
 				f"{len(customers[percent])} customer(s) with an unsupported "
 				f"vat_exemption_percent of {percent}"
 			)
-			continue
-		needed[CAT_IVA[percent]] = {
-			"type": "IVA",
-			"base": "Tax Amount",
-			"scope": "Party Based",
-			"rate": flt(percent),
-		}
 
 	# Work out the per-company rows first: `accounts` is mandatory on Tax
 	# Withholding Category, so a new category has to be created *with* them.

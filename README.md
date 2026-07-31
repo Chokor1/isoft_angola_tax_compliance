@@ -197,6 +197,17 @@ bench --site <site> execute isoft_angola_tax_compliance.migrate_legacy.execute  
 
 Properties worth relying on:
 
+- **Reads the database columns, not meta.** `bench migrate` syncs DocTypes
+  *before* it runs patches, so the same deploy that carries this migration is
+  also the one that removes `enable_vat_exemption` and the two `Company`
+  account fields from ERPNext. A `meta.get_field()` guard would see nothing and
+  migrate nothing — silently, because "nothing to migrate" and "cannot see
+  anything to migrate" look identical. Frappe never drops columns, so the data
+  is still there and is read directly.
+- **Seeds all three categories** — retenção II 6,5% plus IVA cativo at 50% and
+  100% — whenever the company has an account for the regime. They are not
+  conditioned on which percentages happen to appear on customers today: a
+  missing category is a silent under-withholding.
 - **Idempotent** — re-running reports `0 / 0 / 0`. Safe on every deploy.
 - **Additive only** — never edits an existing rate row, never removes a customer
   row, never overwrites an account already configured by hand. Where the

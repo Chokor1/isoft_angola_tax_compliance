@@ -1,1 +1,2 @@
 isoft_angola_tax_compliance.patches.migrate_legacy_withholding
+isoft_angola_tax_compliance.patches.remigrate_legacy_withholding
