@@ -1,0 +1,126 @@
+{
+ "actions": [],
+ "creation": "2026-07-31 00:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "enabled",
+  "enforcement",
+  "column_break_main",
+  "only_on_change",
+  "section_where",
+  "validate_on_customer",
+  "validate_on_quotation",
+  "column_break_where",
+  "validate_on_sales_invoice",
+  "section_exempt",
+  "allow_blank",
+  "exempt_tax_ids",
+  "section_rules",
+  "rules_html"
+ ],
+ "fields": [
+  {
+   "default": "0",
+   "description": "Nothing is checked until this is on.",
+   "fieldname": "enabled",
+   "fieldtype": "Check",
+   "label": "Enable NIF Validation"
+  },
+  {
+   "default": "Warn",
+   "depends_on": "enabled",
+   "description": "Warn shows a message and lets the save through. Block refuses the save.",
+   "fieldname": "enforcement",
+   "fieldtype": "Select",
+   "label": "Enforcement",
+   "options": "Warn\nBlock"
+  },
+  {
+   "fieldname": "column_break_main",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "1",
+   "depends_on": "enabled",
+   "description": "Only check when the NIF or the customer type is new or changed. Leave on: without it, every save of an existing record with a bad NIF is blocked, including edits that have nothing to do with the NIF. Use the report to clean up history instead.",
+   "fieldname": "only_on_change",
+   "fieldtype": "Check",
+   "label": "Only Validate New or Changed Values"
+  },
+  {
+   "depends_on": "enabled",
+   "fieldname": "section_where",
+   "fieldtype": "Section Break",
+   "label": "Where To Check"
+  },
+  {
+   "default": "1",
+   "fieldname": "validate_on_customer",
+   "fieldtype": "Check",
+   "label": "On Customer"
+  },
+  {
+   "default": "1",
+   "fieldname": "validate_on_quotation",
+   "fieldtype": "Check",
+   "label": "On Quotation"
+  },
+  {
+   "fieldname": "column_break_where",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "1",
+   "fieldname": "validate_on_sales_invoice",
+   "fieldtype": "Check",
+   "label": "On Sales Invoice"
+  },
+  {
+   "depends_on": "enabled",
+   "fieldname": "section_exempt",
+   "fieldtype": "Section Break",
+   "label": "Exemptions"
+  },
+  {
+   "default": "1",
+   "description": "A customer with no NIF at all is not flagged.",
+   "fieldname": "allow_blank",
+   "fieldtype": "Check",
+   "label": "Allow Blank NIF"
+  },
+  {
+   "default": "999999999",
+   "description": "One per line. Accepted as-is, whatever the format. 999999999 is the usual consumidor final placeholder.",
+   "fieldname": "exempt_tax_ids",
+   "fieldtype": "Small Text",
+   "label": "Exempt NIFs"
+  },
+  {
+   "fieldname": "section_rules",
+   "fieldtype": "Section Break",
+   "label": "Rules"
+  },
+  {
+   "fieldname": "rules_html",
+   "fieldtype": "HTML",
+   "options": "<table class='table table-bordered small'><thead><tr><th>Customer Type</th><th>Format</th><th>Example</th></tr></thead><tbody><tr><td>Individual</td><td>9 digits, 2 capital letters, 3 digits (14 characters)</td><td><code>002282100LA037</code></td></tr><tr><td>Company</td><td>10 digits, all numeric, starting with 5</td><td><code>5002751267</code></td></tr></tbody></table>"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "issingle": 1,
+ "links": [],
+ "modified": "2026-07-31 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Isoft Angola Tax Compliance",
+ "name": "Angola NIF Validation Settings",
+ "owner": "Administrator",
+ "permissions": [
+  {"create": 1, "delete": 1, "email": 1, "print": 1, "read": 1, "role": "System Manager", "share": 1, "write": 1},
+  {"create": 1, "delete": 1, "email": 1, "print": 1, "read": 1, "role": "Accounts Manager", "share": 1, "write": 1}
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "track_changes": 1
+}

@@ -229,6 +229,47 @@ updated rather than skipped, so definition changes still propagate.
    would a rule assign — and names the reason.
 5. **Angola Tax Compliance Settings** — set the company's mode.
 
+## NIF validation
+
+Invalid Tax IDs are the usual reason AGT rejects an invoice, so the format is
+checked where it is typed. Configured in **Angola NIF Validation Settings**
+(a Single), off until enabled.
+
+| Customer Type | Format | Example |
+|---|---|---|
+| Individual | 9 digits, 2 capital letters, 3 digits (14 chars) | `002282100LA037` |
+| Company | 10 digits, all numeric, starting with 5 | `5002751267` |
+
+Settings:
+
+- **Enforcement** — `Warn` (message, save proceeds) or `Block` (refuses the save).
+- **Only Validate New or Changed Values** (on by default) — without it, *every*
+  save of an existing record with a bad NIF is refused, including edits that
+  have nothing to do with the NIF. Clean up history through the report instead.
+- **Where** — Customer, Quotation, Sales Invoice, independently.
+- **Exemptions** — blank NIFs, plus a list of accepted placeholders
+  (`999999999` for consumidor final by default).
+
+Sales Invoice is checked against its own `tax_id` snapshot, since that is what
+is printed and filed; Quotation has no such field, so the customer's current NIF
+is used.
+
+### Wrong type vs wrong number
+
+A large share of invalid NIFs are *valid* NIFs on a record whose Customer Type
+is wrong — an individual's `005364819LA044` on a customer set to Company. The
+message says so, because the fix is the type, not the number:
+
+> NIF **005364819LA044** is a valid **Individual** NIF, but this customer is set
+> as **Company**. Change the Customer Type rather than the NIF.
+
+### Finding the bad ones
+
+Report **Invalid NIF** lists every customer that fails, split into
+`Wrong Customer Type` and `Invalid Format`, with a suggested type and the number
+of submitted invoices already issued against that customer — most-invoiced
+first, since those are the ones already reaching AGT.
+
 ## Before updating an existing site
 
 Enablement is the company's country, so an Angolan company goes live the moment

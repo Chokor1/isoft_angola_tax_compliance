@@ -72,12 +72,23 @@ doctype_js = {
 # computation, so the quoted net-of-withholding figure is visible and printable.
 doc_events = {
 	"Quotation": {
-		"validate": "isoft_angola_tax_compliance.withholding.apply.set_withholdings",
+		"validate": [
+			"isoft_angola_tax_compliance.withholding.apply.set_withholdings",
+			"isoft_angola_tax_compliance.nif.validate_transaction",
+		],
+	},
+	"Sales Invoice": {
+		"validate": "isoft_angola_tax_compliance.nif.validate_transaction",
 	},
 	# Stamp the withholding category on newly created items, per the rules on
 	# the categories themselves. Insert only, and only when the field is empty.
 	"Item": {
 		"before_insert": "isoft_angola_tax_compliance.auto_assign.apply_to_item",
+	},
+	# Angolan NIF format check. Off until enabled in Angola NIF Validation
+	# Settings, and warns rather than blocks unless configured otherwise.
+	"Customer": {
+		"validate": "isoft_angola_tax_compliance.nif.validate_customer",
 	},
 }
 
@@ -239,12 +250,23 @@ doctype_js = {
 # computation, so the quoted net-of-withholding figure is visible and printable.
 doc_events = {
 	"Quotation": {
-		"validate": "isoft_angola_tax_compliance.withholding.apply.set_withholdings",
+		"validate": [
+			"isoft_angola_tax_compliance.withholding.apply.set_withholdings",
+			"isoft_angola_tax_compliance.nif.validate_transaction",
+		],
+	},
+	"Sales Invoice": {
+		"validate": "isoft_angola_tax_compliance.nif.validate_transaction",
 	},
 	# Stamp the withholding category on newly created items, per the rules on
 	# the categories themselves. Insert only, and only when the field is empty.
 	"Item": {
 		"before_insert": "isoft_angola_tax_compliance.auto_assign.apply_to_item",
+	},
+	# Angolan NIF format check. Off until enabled in Angola NIF Validation
+	# Settings, and warns rather than blocks unless configured otherwise.
+	"Customer": {
+		"validate": "isoft_angola_tax_compliance.nif.validate_customer",
 	},
 }
 
