@@ -112,10 +112,38 @@ def _changed(doc, *fieldnames):
 	return any(doc.get(f) != before.get(f) for f in fieldnames)
 
 
+def matching_type(tax_id):
+	"""The customer type this NIF is unambiguously formatted for, or None."""
+	tax_id = (tax_id or "").strip()
+	if not tax_id:
+		return None
+
+	for customer_type, pattern in PATTERNS.items():
+		if pattern.match(tax_id):
+			return customer_type
+
+	return None
+
+
 def validate_customer(doc, method=None):
 	settings = get_settings()
 	if not (settings and settings.enabled and settings.validate_on_customer):
 		return
+
+	# Deliberately ahead of the only-on-change guard. That guard exists to stop
+	# an unrelated edit being *refused* over pre-existing bad data; a correction
+	# refuses nothing and only ever improves the record, so gating it there
+	# would leave data wrong that we already know how to fix.
+	if settings.auto_correct_customer_type:
+		correct = matching_type(doc.get("tax_id"))
+		if correct and correct != doc.get("customer_type"):
+			was = doc.get("customer_type")
+			doc.customer_type = correct
+			frappe.msgprint(
+				_("Customer Type changed from {0} to {1} to match the NIF.").format(was, correct),
+				alert=True,
+				indicator="blue",
+			)
 
 	if settings.only_on_change and not _changed(doc, "tax_id", "customer_type"):
 		return
@@ -170,3 +198,111 @@ def check_tax_id(tax_id=None, customer_type=None):
 	"""Whitelisted single check, for client-side feedback."""
 	ok, message = check(tax_id, customer_type)
 	return {"valid": ok, "message": message}
+
+
+# ---------------------------------------------------------------------------
+# Bulk correction of Customer Type
+# ---------------------------------------------------------------------------
+# Only applied where the NIF is well-formed for the *other* type, so the right
+# answer is not in doubt. A malformed number is never guessed at -- those stay
+# in the Invalid NIF report for a human to look at.
+
+
+def find_type_fixes(include_disabled=False):
+	"""Every customer whose NIF is valid under the other type. Writes nothing."""
+	conditions = "" if include_disabled else "AND IFNULL(c.disabled, 0) = 0"
+	rows = frappe.db.sql(
+		"""SELECT c.name, c.customer_name, c.customer_type, IFNULL(c.tax_id, '') AS tax_id
+		   FROM `tabCustomer` c
+		   WHERE IFNULL(c.tax_id, '') <> '' {0}
+		   ORDER BY c.name""".format(conditions),
+		as_dict=True,
+	)
+
+	fixes = []
+	for row in rows:
+		correct = matching_type(row.tax_id)
+		if correct and correct != row.customer_type:
+			fixes.append(
+				{
+					"customer": row.name,
+					"customer_name": row.customer_name,
+					"tax_id": row.tax_id,
+					"from_type": row.customer_type,
+					"to_type": correct,
+				}
+			)
+
+	return fixes
+
+
+def summarise_fixes(fixes, sample=15):
+	counts = {}
+	for fix in fixes:
+		key = "{0} -> {1}".format(fix["from_type"], fix["to_type"])
+		counts[key] = counts.get(key, 0) + 1
+
+	return {"total": len(fixes), "by_direction": counts, "sample": fixes[:sample]}
+
+
+def apply_type_fixes(include_disabled=False):
+	"""Write the corrected Customer Type.
+
+	Uses db.set_value rather than doc.save: this is a one-field correction over
+	potentially thousands of records, and a full save would fire every Customer
+	hook -- including this app's own validation -- on each one.
+	"""
+	fixes = find_type_fixes(include_disabled=include_disabled)
+	for fix in fixes:
+		frappe.db.set_value(
+			"Customer", fix["customer"], "customer_type", fix["to_type"], update_modified=False
+		)
+
+	frappe.db.commit()
+	frappe.clear_cache()
+	summary = summarise_fixes(fixes, sample=0)
+	return {"updated": summary["total"], "by_direction": summary["by_direction"]}
+
+
+@frappe.whitelist()
+def get_type_fix_preview(include_disabled=0):
+	frappe.has_permission("Customer", "write", throw=True)
+	return summarise_fixes(find_type_fixes(include_disabled=int(include_disabled or 0)))
+
+
+@frappe.whitelist()
+def run_type_fix(include_disabled=0):
+	frappe.has_permission("Customer", "write", throw=True)
+	return apply_type_fixes(include_disabled=int(include_disabled or 0))
+
+
+def fix_customer_types(confirm=False, include_disabled=False):
+	"""Command-line entry point. Dry run unless confirm=True.
+
+	    bench --site <site> execute isoft_angola_tax_compliance.nif.fix_customer_types
+	    bench --site <site> execute isoft_angola_tax_compliance.nif.fix_customer_types \\
+	        --kwargs '{"confirm": true}'
+	"""
+	summary = summarise_fixes(find_type_fixes(include_disabled=include_disabled))
+
+	print("=" * 76)
+	print("  CUSTOMER TYPE FIX" + ("" if confirm else "   [DRY RUN -- nothing written]"))
+	print("=" * 76)
+	print(f"\n  customers with a valid NIF under the wrong type : {summary['total']}")
+	for direction, count in summary["by_direction"].items():
+		print(f"      {direction:26} {count}")
+
+	if summary["sample"]:
+		print("\n  sample:")
+		for fix in summary["sample"]:
+			print(f"      {fix['customer'][:26]:28} {fix['tax_id']:16} "
+				f"{fix['from_type']:11} -> {fix['to_type']}")
+
+	if not summary["total"] or not confirm:
+		if summary["total"]:
+			print("\n  DRY RUN -- nothing written. Re-run with --kwargs '{\"confirm\": true}'.")
+		return summary
+
+	applied = apply_type_fixes(include_disabled=include_disabled)
+	print(f"\n  Updated {applied['updated']} customer(s).")
+	return applied

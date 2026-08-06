@@ -9,6 +9,7 @@
   "enforcement",
   "column_break_main",
   "only_on_change",
+  "auto_correct_customer_type",
   "section_where",
   "validate_on_customer",
   "validate_on_quotation",
@@ -48,6 +49,14 @@
    "fieldname": "only_on_change",
    "fieldtype": "Check",
    "label": "Only Validate New or Changed Values"
+  },
+  {
+   "default": "1",
+   "depends_on": "enabled",
+   "description": "When the NIF is valid for the other type, correct the Customer Type on save instead of complaining. Only ever applied when the number itself is unambiguous, never guessed.",
+   "fieldname": "auto_correct_customer_type",
+   "fieldtype": "Check",
+   "label": "Auto-correct Customer Type"
   },
   {
    "depends_on": "enabled",
@@ -117,8 +126,26 @@
  "name": "Angola NIF Validation Settings",
  "owner": "Administrator",
  "permissions": [
-  {"create": 1, "delete": 1, "email": 1, "print": 1, "read": 1, "role": "System Manager", "share": 1, "write": 1},
-  {"create": 1, "delete": 1, "email": 1, "print": 1, "read": 1, "role": "Accounts Manager", "share": 1, "write": 1}
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "role": "Accounts Manager",
+   "share": 1,
+   "write": 1
+  }
  ],
  "sort_field": "modified",
  "sort_order": "DESC",
