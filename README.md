@@ -238,7 +238,24 @@ checked where it is typed. Configured in **Angola NIF Validation Settings**
 | Customer Type | Format | Example |
 |---|---|---|
 | Individual | 9 digits, 2 capital letters, 3 digits (14 chars) | `002282100LA037` |
-| Company | 10 digits, all numeric, starting with 5 | `5002751267` |
+| Company | 10 digits, all numeric, accepted prefix | `5002751267` |
+
+### The company prefix is configuration, not a constant
+
+Decreto Presidencial 245/21 art. 5 assigns companies 10 sequential digits
+beginning with **5** — but AGT has renumbered twice, and both older schemes are
+still on live records:
+
+| Prefix | Meaning |
+|---|---|
+| `5` | current law |
+| `7` | earlier prefix for collective entities, converted to Type 5 on 1 Aug 2019 |
+| `0` | pre-2019 sequential numbers, e.g. `0000016333` |
+
+**Accepted First Digits** defaults to `0,5,7` for that reason. Set it to `5`
+alone to insist on re-registered numbers. Hardcoding "must start with 5" would
+flag valid legacy numbers as errors and would break again at the next
+renumbering — the same mistake as hardcoding a withholding rate.
 
 Settings:
 

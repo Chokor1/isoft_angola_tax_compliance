@@ -14,7 +14,7 @@ so the ones that matter most sort to the top.
 import frappe
 from frappe import _
 
-from isoft_angola_tax_compliance.nif import PATTERNS, check, get_settings
+from isoft_angola_tax_compliance.nif import check, get_patterns, get_settings
 
 
 def execute(filters=None):
@@ -38,6 +38,7 @@ def get_columns():
 
 def get_data(filters):
 	settings = get_settings()
+	patterns = get_patterns(settings)
 
 	conditions = ["1=1"]
 	values = {}
@@ -65,7 +66,7 @@ def get_data(filters):
 			continue
 
 		suggested = ""
-		for other, pattern in PATTERNS.items():
+		for other, pattern in patterns.items():
 			if other != row.customer_type and pattern.match((row.tax_id or "").strip()):
 				suggested = other
 				break

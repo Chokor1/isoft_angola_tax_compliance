@@ -18,6 +18,8 @@
   "section_exempt",
   "allow_blank",
   "exempt_tax_ids",
+  "section_format",
+  "company_nif_prefixes",
   "section_rules",
   "rules_html"
  ],
@@ -105,6 +107,19 @@
    "fieldname": "exempt_tax_ids",
    "fieldtype": "Small Text",
    "label": "Exempt NIFs"
+  },
+  {
+   "depends_on": "enabled",
+   "fieldname": "section_format",
+   "fieldtype": "Section Break",
+   "label": "Company NIF Prefixes"
+  },
+  {
+   "default": "0,5,7",
+   "description": "Accepted first digits for a 10-digit company NIF. Current law (Decreto Presidencial 245/21, art. 5) assigns <b>5</b>. <b>7</b> was the earlier prefix for collective entities, converted to Type 5 on 1 August 2019, and <b>0</b> appears on pre-2019 sequential numbers &mdash; both are still on live records, so both are accepted by default. Set this to <code>5</code> alone to insist on re-registered numbers.",
+   "fieldname": "company_nif_prefixes",
+   "fieldtype": "Data",
+   "label": "Accepted First Digits"
   },
   {
    "fieldname": "section_rules",

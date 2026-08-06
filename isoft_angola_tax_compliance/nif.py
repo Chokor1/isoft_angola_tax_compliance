@@ -3,7 +3,7 @@
 """Angolan NIF (Tax ID) format validation.
 
     Individual   9 digits, 2 capital letters, 3 digits   002282100LA037
-    Company      10 digits, all numeric, starting with 5  5002751267
+    Company      10 digits, all numeric, accepted prefix  5002751267
 
 Invalid NIFs are the usual cause of an invoice AGT rejects, so the cheapest
 place to catch one is where it is typed.
@@ -17,6 +17,13 @@ Two things this is careful about, both learned from the real data:
   `customer_type` is wrong -- an individual's `005364819LA044` sitting on a
   customer typed as Company. The validator says so explicitly rather than
   reporting a bad NIF, because the fix is the type, not the number.
+
+* The company prefix is CONFIGURATION, not a constant. Decreto Presidencial
+  245/21 art. 5 assigns 10 sequential digits beginning with 5, but AGT has
+  renumbered twice: prefix 7 covered collective entities until it was converted
+  to Type 5 on 1 August 2019, and pre-2019 sequential numbers appear with a
+  leading 0. Both are still on live records. Hardcoding "must start with 5"
+  would flag them as errors and would break again at the next renumbering.
 """
 
 import re
@@ -27,14 +34,36 @@ from frappe import _
 SETTINGS = "Angola NIF Validation Settings"
 
 INDIVIDUAL = re.compile(r"^\d{9}[A-Z]{2}\d{3}$")
-COMPANY = re.compile(r"^5\d{9}$")
 
-PATTERNS = {"Individual": INDIVIDUAL, "Company": COMPANY}
+# Current law is 5. 7 and 0 are earlier AGT numbering still present on live
+# records -- see the module docstring. Overridden per site in the settings.
+DEFAULT_COMPANY_PREFIXES = "0,5,7"
 
-DESCRIPTIONS = {
-	"Individual": "9 digits, 2 capital letters, then 3 digits (14 characters), e.g. 002282100LA037",
-	"Company": "10 digits, all numeric, starting with 5, e.g. 5002751267",
-}
+
+def company_prefixes(settings=None):
+	settings = settings if settings is not None else get_settings()
+	raw = (settings.company_nif_prefixes if settings else "") or DEFAULT_COMPANY_PREFIXES
+	digits = sorted({c for c in raw if c.isdigit()})
+	return digits or ["5"]
+
+
+def company_pattern(settings=None):
+	return re.compile(r"^[{0}]\d{{9}}$".format("".join(company_prefixes(settings))))
+
+
+def get_patterns(settings=None):
+	"""{customer_type: compiled pattern} for the site's configuration."""
+	return {"Individual": INDIVIDUAL, "Company": company_pattern(settings)}
+
+
+def describe(customer_type, settings=None):
+	if customer_type == "Individual":
+		return "9 digits, 2 capital letters, then 3 digits (14 characters), e.g. 002282100LA037"
+
+	prefixes = company_prefixes(settings)
+	return "10 digits, all numeric, starting with {0}, e.g. 5002751267".format(
+		" or ".join(prefixes)
+	)
 
 
 def get_settings():
@@ -72,7 +101,8 @@ def check(tax_id, customer_type, settings=None):
 		return True, None
 
 	customer_type = customer_type or "Company"
-	pattern = PATTERNS.get(customer_type)
+	patterns = get_patterns(settings)
+	pattern = patterns.get(customer_type)
 	if not pattern:
 		return True, None
 
@@ -81,7 +111,7 @@ def check(tax_id, customer_type, settings=None):
 
 	# The number may be well-formed for the *other* type, which means the
 	# customer type is what is wrong. Saying so saves a pointless hunt.
-	for other, other_pattern in PATTERNS.items():
+	for other, other_pattern in patterns.items():
 		if other != customer_type and other_pattern.match(tax_id):
 			return False, _(
 				"NIF {0} is a valid <b>{1}</b> NIF, but this customer is set as <b>{2}</b>. "
@@ -89,7 +119,7 @@ def check(tax_id, customer_type, settings=None):
 			).format(frappe.bold(tax_id), other, customer_type)
 
 	return False, _("NIF {0} is not valid for a <b>{1}</b>. Expected {2}.").format(
-		frappe.bold(tax_id), customer_type, DESCRIPTIONS.get(customer_type, "")
+		frappe.bold(tax_id), customer_type, describe(customer_type, settings)
 	)
 
 
@@ -112,13 +142,13 @@ def _changed(doc, *fieldnames):
 	return any(doc.get(f) != before.get(f) for f in fieldnames)
 
 
-def matching_type(tax_id):
+def matching_type(tax_id, settings=None):
 	"""The customer type this NIF is unambiguously formatted for, or None."""
 	tax_id = (tax_id or "").strip()
 	if not tax_id:
 		return None
 
-	for customer_type, pattern in PATTERNS.items():
+	for customer_type, pattern in get_patterns(settings).items():
 		if pattern.match(tax_id):
 			return customer_type
 
