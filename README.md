@@ -270,6 +270,20 @@ Report **Invalid NIF** lists every customer that fails, split into
 of submitted invoices already issued against that customer — most-invoiced
 first, since those are the ones already reaching AGT.
 
+**Fix Customer Types** on that report bulk-corrects every customer whose NIF is
+valid under the other type, after showing the count, the direction of each
+change and a sample. Same from the shell:
+
+```bash
+bench --site <site> execute isoft_angola_tax_compliance.nif.fix_customer_types
+bench --site <site> execute isoft_angola_tax_compliance.nif.fix_customer_types \
+    --kwargs '{"confirm": true}'
+```
+
+It writes with `db.set_value`, not a full save: this is a one-field correction
+over thousands of records, and a full save would fire every Customer hook —
+including this app's own validation — on each one.
+
 ## Before updating an existing site
 
 Enablement is the company's country, so an Angolan company goes live the moment
