@@ -7,6 +7,7 @@
  "field_order": [
   "enabled",
   "enforcement",
+  "pos_enforcement",
   "column_break_main",
   "only_on_change",
   "auto_correct_customer_type",
@@ -38,6 +39,15 @@
    "fieldname": "enforcement",
    "fieldtype": "Select",
    "label": "Enforcement",
+   "options": "Warn\nBlock"
+  },
+  {
+   "default": "Warn",
+   "depends_on": "enabled",
+   "description": "Enforcement for customers created at the till. Kept separate and defaulted to <b>Warn</b> on purpose: a cashier with a queue cannot always obtain a correct NIF, and refusing the customer stops the sale. The Invalid NIF report picks these up afterwards.",
+   "fieldname": "pos_enforcement",
+   "fieldtype": "Select",
+   "label": "Enforcement in POS",
    "options": "Warn\nBlock"
   },
   {

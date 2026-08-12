@@ -123,9 +123,29 @@ def check(tax_id, customer_type, settings=None):
 	)
 
 
+# Set by posawesome around its customer-creation endpoint. A cashier with a
+# queue cannot always obtain a correct NIF, and refusing the customer stops the
+# sale, so POS gets its own enforcement level.
+POS_FLAG = "atc_nif_pos_context"
+
+
+def in_pos_context():
+	return bool(getattr(frappe.flags, POS_FLAG, False))
+
+
+def enforcement(settings):
+	if not settings:
+		return "Warn"
+
+	if in_pos_context():
+		return settings.get("pos_enforcement") or "Warn"
+
+	return settings.enforcement or "Warn"
+
+
 def _report(doc, message, settings):
 	title = _("Invalid NIF")
-	if settings and settings.enforcement == "Block":
+	if enforcement(settings) == "Block":
 		frappe.throw(message, title=title)
 	frappe.msgprint(message, title=title, indicator="orange")
 
