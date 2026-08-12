@@ -169,10 +169,19 @@ updated rather than skipped, so definition changes still propagate.
      rate row 6.5% with from/to dates, account per company.
    - *IVA Cativo 50%*: type `IVA`, base `Tax Amount`, scope `Party Based`,
      base tax accounts = the IVA Liquidado account(s), rate row 50%.
-3. **Customer → Withholdings** — a child table, so a customer can be subject to
+3. **Applies To Customer Type** — on the category. Retenção na fonte is
+   withheld *by the acquirer*, so it typically only bites where the customer is
+   a **Company**; a private individual does not withhold. Set it to `Company` on
+   the retenção category and the regime is skipped for individuals, while IVA
+   cativo (or anything left on `All`) continues to apply.
+
+   The skip is silent, not an error — a category resolving for a customer it
+   does not cover is entirely normal.
+
+4. **Customer → Withholdings** — a child table, so a customer can be subject to
    several regimes at once. Close `valid_to` rather than deleting a row when a
    dispensa is granted.
-4. **Item / Item Group → Withholding Category (Angola)** — for the item-based
+5. **Item / Item Group → Withholding Category (Angola)** — for the item-based
    regime. Resolution at invoice time, most specific first:
    `SI Item → Item → Item Group tree`.
 
@@ -227,7 +236,6 @@ updated rather than skipped, so definition changes still propagate.
    It walks the whole chain — are the rule fields migrated, is the checkbox
    ticked, is the scope `Item Based`, what is the item's group ancestry, what
    would a rule assign — and names the reason.
-5. **Angola Tax Compliance Settings** — set the company's mode.
 
 ## NIF validation
 

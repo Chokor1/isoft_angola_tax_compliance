@@ -28,7 +28,13 @@ from isoft_angola_tax_compliance.withholding.settings import applies_to_document
 TYPE_FIELD = "atc_withholding_type"
 BASE_TYPE_FIELD = "atc_base_type"
 APPLIES_TO_FIELD = "atc_applies_to"
+CUSTOMER_TYPE_FIELD = "atc_customer_type"
 BASE_ACCOUNTS_FIELD = "atc_base_tax_accounts"
+
+# A regime can be limited to one kind of customer. Retencao na fonte is withheld
+# by the acquirer, so it only bites where the customer keeps organised accounts
+# -- a private individual does not withhold. `All` keeps both.
+CUSTOMER_TYPE_ALL = "All"
 
 BASE_ITEM_NET = "Item Net Amount"
 BASE_TAX_AMOUNT = "Tax Amount"
@@ -56,7 +62,8 @@ def evaluate(doc):
 	if not applies_to_document(doc):
 		return result
 
-	if not resolver.get_customer(doc):
+	customer = resolver.get_customer(doc)
+	if not customer:
 		# No resolvable customer -- e.g. a Quotation addressed to a Lead. Every
 		# claim this engine makes is about what a specific customer withholds,
 		# so without one we compute nothing. Returning only the item-based half
@@ -66,6 +73,7 @@ def evaluate(doc):
 
 	posting_date = getdate(resolver.get_posting_date(doc))
 	precision = doc.precision("grand_total") or 2
+	customer_type = frappe.get_cached_value("Customer", customer, "customer_type")
 
 	candidates = {}
 
@@ -78,7 +86,9 @@ def evaluate(doc):
 
 	rows = []
 	for category in candidates:
-		row, message = _evaluate_category(doc, candidates[category], posting_date, precision)
+		row, message = _evaluate_category(
+			doc, candidates[category], posting_date, precision, customer_type
+		)
 		if message:
 			result["messages"].append(message)
 		if row:
@@ -92,13 +102,19 @@ def evaluate(doc):
 	return result
 
 
-def _evaluate_category(doc, candidate, posting_date, precision):
+def _evaluate_category(doc, candidate, posting_date, precision, customer_type=None):
 	category = candidate["category"]
 
 	try:
 		config = get_category_config(category)
 	except frappe.DoesNotExistError:
 		return None, _("Tax Withholding Category {0} does not exist.").format(category)
+
+	wanted_type = config.get("customer_type") or CUSTOMER_TYPE_ALL
+	if wanted_type != CUSTOMER_TYPE_ALL and customer_type and wanted_type != customer_type:
+		# Not applicable to this customer. Silent, not a message: the category
+		# resolving here is entirely normal, it simply does not bite.
+		return None, None
 
 	scope = config.get("applies_to")
 	if scope == SCOPE_PARTY and not candidate["party"]:
@@ -277,6 +293,7 @@ def get_category_config(category):
 		"withholding_type": doc.get(TYPE_FIELD),
 		"base_type": base_type,
 		"applies_to": applies_to,
+		"customer_type": doc.get(CUSTOMER_TYPE_FIELD) or CUSTOMER_TYPE_ALL,
 		"base_tax_accounts": [r.as_dict() for r in doc.get(BASE_ACCOUNTS_FIELD) or []],
 		"round_off_tax_amount": doc.get("round_off_tax_amount"),
 		"rates": [r.as_dict() for r in doc.get("rates") or []],

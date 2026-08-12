@@ -15,6 +15,7 @@ import frappe
 WITHHOLDING_TYPES = "\nII\nIVA\nIRT\nOther"
 BASE_TYPES = "Item Net Amount\nTax Amount\nGrand Total"
 SCOPES = "\nItem Based\nParty Based"
+CUSTOMER_TYPES = "All\nCompany\nIndividual"
 
 
 def get_custom_fields():
@@ -64,10 +65,24 @@ def get_custom_fields():
 				),
 			},
 			{
+				"fieldname": "atc_customer_type",
+				"fieldtype": "Select",
+				"label": "Applies To Customer Type",
+				"options": CUSTOMER_TYPES,
+				"default": "All",
+				"insert_after": "atc_applies_to",
+				"description": (
+					"Restrict this regime by who the customer is. Retenção na fonte is "
+					"withheld by the acquirer, so it typically applies only where the "
+					"customer is a <b>Company</b> — a private individual does not withhold. "
+					"Leave as <b>All</b> unless the regime genuinely distinguishes."
+				),
+			},
+			{
 				"fieldname": "atc_base_accounts_section",
 				"fieldtype": "Section Break",
 				"label": "Base Tax Accounts",
-				"insert_after": "atc_applies_to",
+				"insert_after": "atc_customer_type",
 				"depends_on": "eval:doc.atc_base_type=='Tax Amount'",
 				"description": (
 					"Which tax account heads the withholding is calculated on. Scoping this "
