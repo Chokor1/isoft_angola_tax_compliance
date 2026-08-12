@@ -288,6 +288,15 @@ message says so, because the fix is the type, not the number:
 > NIF **005364819LA044** is a valid **Individual** NIF, but this customer is set
 > as **Company**. Change the Customer Type rather than the NIF.
 
+**Auto-correct Customer Type** (on by default) applies that on save and reports
+it with a small alert.
+
+A number valid for *neither* type is a different thing, and is never guessed at.
+There is no type to switch `GGG TEST` to — changing it would only swap the
+message to "not valid for a Company". That case stays an error, which is what
+**Enforcement in POS** exists to soften: warn at the till, fix it from the
+report.
+
 ### Finding the bad ones
 
 Report **Invalid NIF** lists every customer that fails, split into
