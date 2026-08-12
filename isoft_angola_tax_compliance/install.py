@@ -123,9 +123,40 @@ def setup_custom_fields():
 
 	if fields:
 		create_custom_fields(fields, ignore_validate=True)
+		renumber_custom_fields(fields)
 
 	frappe.db.commit()
 	return {"created": sorted(fields), "skipped": skipped}
+
+
+def renumber_custom_fields(fields):
+	"""Make each Custom Field's `idx` follow the order it is declared in.
+
+	Frappe places custom fields by walking them **sorted by idx** and inserting
+	each one after its `insert_after` target -- but it only does two passes
+	(`Meta.sort_fields`: `for i in range(2)`). A field whose anchor has not been
+	placed yet is left over, and anything still unplaced after the second pass
+	is dumped at the end of the form.
+
+	Our Tax Withholding Category fields form a chain a dozen long, each anchored
+	on the previous one. That resolves in a single pass only while `idx` runs in
+	the same order as the chain -- and it does not, because `create_custom_fields`
+	assigns `idx` per creation and this app has added fields over several
+	releases. The result was `atc_customer_type` landing last, inside a section
+	whose `depends_on` hid it entirely.
+
+	Declaration order in `custom_fields.py` is the chain order, so numbering to
+	match makes the first pass sufficient.
+	"""
+	for doctype, definitions in fields.items():
+		for position, df in enumerate(definitions, start=1):
+			name = frappe.db.get_value(
+				"Custom Field", {"dt": doctype, "fieldname": df["fieldname"]}, "name"
+			)
+			if name:
+				frappe.db.set_value("Custom Field", name, "idx", position, update_modified=False)
+
+		frappe.clear_cache(doctype=doctype)
 
 
 def filter_conflicting_fields(fields):
