@@ -1,0 +1,419 @@
+{
+    "country_code": "ao",
+    "name": "Angola - Plano Geral de Contabilidade (PGC)",
+    "tree": {
+        "Meios Fixos e Investimentos (Activos)": {
+            "account_number": "1",
+            "root_type": "Asset",
+            "Imobilizações Corpóreas": {
+                "account_number": "11",
+                "Terrenos e Recursos Naturais": {
+                    "account_number": "111",
+                    "account_type": "Fixed Asset"
+                },
+                "Edifícios e Outras Construções": {
+                    "account_number": "112",
+                    "account_type": "Fixed Asset"
+                },
+                "Equipamento Básico": {
+                    "account_number": "113",
+                    "account_type": "Fixed Asset"
+                },
+                "Equipamento de Carga e Transporte": {
+                    "account_number": "114",
+                    "account_type": "Fixed Asset"
+                },
+                "Equipamento Administrativo": {
+                    "account_number": "115",
+                    "Equipamento Informático": {
+                        "account_number": "1151",
+                        "account_type": "Fixed Asset"
+                    },
+                    "Equipamento Social": {
+                        "account_number": "1152",
+                        "account_type": "Fixed Asset"
+                    },
+                    "Mobiliário": {
+                        "account_number": "1153",
+                        "account_type": "Fixed Asset"
+                    }
+                },
+                "Outras Imobilizações Corpóreas": {
+                    "account_number": "119",
+                    "account_type": "Fixed Asset"
+                }
+            },
+            "Imobilizações Incorpóreas": {
+                "account_number": "12",
+                "Outras Imobilizações Incorpóreas": {
+                    "account_number": "129",
+                    "account_type": "Fixed Asset"
+                }
+            },
+            "Imobilizações em Curso": {
+                "account_number": "14",
+                "account_type": "Capital Work in Progress"
+            },
+            "Amortizações Acumuladas": {
+                "account_number": "18",
+                "Imobilizações Corpóreas": {
+                    "account_number": "181",
+                    "account_type": "Accumulated Depreciation"
+                },
+                "Imobilizações Incorpóreas": {
+                    "account_number": "182",
+                    "account_type": "Accumulated Depreciation"
+                }
+            }
+        },
+        "Existências": {
+            "account_number": "2",
+            "root_type": "Asset",
+            "Compras": {
+                "account_number": "21",
+                "Mercadorias": {
+                    "account_number": "212",
+                    "Compras de Mercadorias - Mercado Nacional": {
+                        "account_number": "2121"
+                    },
+                    "Compras de Mercadorias - Mercado Externo": {
+                        "account_number": "2122"
+                    }
+                },
+                "Devoluções de Compras": {
+                    "account_number": "217",
+                    "Devolução de Mercadorias": {
+                        "account_number": "2171"
+                    }
+                }
+            },
+            "Mercadorias": {
+                "account_number": "26",
+                "Mercadorias": {
+                    "account_number": "261",
+                    "Existências": {
+                        "account_number": "2611",
+                        "account_type": "Stock"
+                    }
+                }
+            }
+        },
+        "Clientes": {
+            "account_number": "31",
+            "root_type": "Asset",
+            "Clientes - Estado e com IVA Cativo": {
+                "account_number": "3111",
+                "account_type": "Receivable"
+            },
+            "Clientes - Gerais": {
+                "account_number": "3112",
+                "account_type": "Receivable"
+            }
+        },
+        "Fornecedores": {
+            "account_number": "32",
+            "root_type": "Liability",
+            "Fornecedores Nacionais": {
+                "account_number": "321",
+                "account_type": "Payable"
+            },
+            "Fornecedores Estrangeiros": {
+                "account_number": "322",
+                "account_type": "Payable"
+            },
+            "Fornecedores - Facturas em Recepção e Conferência": {
+                "account_number": "328",
+                "account_type": "Stock Received But Not Billed"
+            }
+        },
+        "Empréstimos": {
+            "account_number": "33",
+            "root_type": "Liability",
+            "is_group": 1
+        },
+        "Estado": {
+            "account_number": "34",
+            "root_type": "Liability",
+            "Imposto sobre os Lucros": {
+                "account_number": "341",
+                "account_type": "Tax"
+            },
+            "Imposto de Produção e Consumo": {
+                "account_number": "342",
+                "account_type": "Tax"
+            },
+            "Imposto de Rendimento do Trabalho": {
+                "account_number": "343",
+                "account_type": "Tax"
+            },
+            "Imposto de Circulação": {
+                "account_number": "344",
+                "account_type": "Tax"
+            },
+            "IVA - Imposto sobre o Valor Acrescentado": {
+                "account_number": "345",
+                "account_type": "Tax",
+                "is_group": 1,
+                "IVA Dedutível": {
+                    "account_number": "3452",
+                    "IVA Dedutível - Existências": {
+                        "account_number": "34521",
+                        "account_type": "Tax"
+                    },
+                    "IVA Dedutível - Meios Fixos e Investimentos": {
+                        "account_number": "34522",
+                        "account_type": "Tax"
+                    },
+                    "IVA Dedutível - Outros Bens e Serviços": {
+                        "account_number": "34523",
+                        "account_type": "Tax"
+                    }
+                },
+                "IVA Liquidado": {
+                    "account_number": "3453",
+                    "account_type": "Tax"
+                },
+                "IVA Regularizações": {
+                    "account_number": "3454",
+                    "account_type": "Tax"
+                }
+            },
+            "Outros Impostos": {
+                "account_number": "349",
+                "Contribuições INSS": {
+                    "account_number": "3492"
+                }
+            }
+        },
+        "Entidades Participantes e Participadas": {
+            "account_number": "35",
+            "root_type": "Liability",
+            "Entidades Participantes": {
+                "account_number": "351"
+            }
+        },
+        "Pessoal": {
+            "account_number": "36",
+            "root_type": "Liability",
+            "Pessoal - Remunerações": {
+                "account_number": "361"
+            },
+            "Pessoal - Adiantamentos": {
+                "account_number": "363"
+            }
+        },
+        "Outros Valores a Receber e a Pagar": {
+            "account_number": "37",
+            "root_type": "Liability",
+            "Compras de Imobilizado": {
+                "account_number": "371",
+                "account_type": "Asset Received But Not Billed"
+            },
+            "Vendas de Imobilizado": {
+                "account_number": "372"
+            },
+            "Proveitos a Facturar": {
+                "account_number": "373"
+            },
+            "Encargos a Repartir por Períodos Futuros": {
+                "account_number": "374"
+            },
+            "Encargos a Pagar": {
+                "account_number": "375"
+            },
+            "Contas Transitórias": {
+                "account_number": "377"
+            },
+            "Outros Valores a Receber e a Pagar": {
+                "account_number": "379"
+            }
+        },
+        "Meios Monetários": {
+            "account_number": "4",
+            "root_type": "Asset",
+            "Depósitos a Prazo": {
+                "account_number": "42",
+                "Moeda Nacional": {
+                    "account_number": "421",
+                    "account_type": "Bank"
+                }
+            },
+            "Depósitos à Ordem": {
+                "account_number": "43",
+                "Moeda Nacional": {
+                    "account_number": "431",
+                    "account_type": "Bank"
+                },
+                "Moeda Estrangeira": {
+                    "account_number": "432",
+                    "account_type": "Bank"
+                }
+            },
+            "Caixa": {
+                "account_number": "45",
+                "Caixa Kwanzas": {
+                    "account_number": "451",
+                    "account_type": "Cash"
+                },
+                "Valores para Depositar": {
+                    "account_number": "452",
+                    "account_type": "Cash"
+                }
+            }
+        },
+        "Capital e Reservas": {
+            "account_number": "5",
+            "root_type": "Equity",
+            "Capital Inicial": {
+                "account_number": "511",
+                "account_type": "Equity"
+            }
+        },
+        "Proveitos e Ganhos por Natureza": {
+            "account_number": "6",
+            "root_type": "Income",
+            "Vendas": {
+                "account_number": "61",
+                "Mercadorias": {
+                    "account_number": "613",
+                    "account_type": "Income Account"
+                },
+                "Devoluções": {
+                    "account_number": "617",
+                    "account_type": "Income Account"
+                }
+            },
+            "Prestações de Serviços": {
+                "account_number": "62",
+                "account_type": "Income Account"
+            },
+            "Proveitos e Ganhos Financeiros Gerais": {
+                "account_number": "66",
+                "account_type": "Income Account"
+            },
+            "Outros Proveitos e Ganhos não Operacionais": {
+                "account_number": "68",
+                "Existências": {
+                    "account_number": "6811",
+                    "account_type": "Income Account"
+                }
+            }
+        },
+        "Custos e Perdas por Natureza": {
+            "account_number": "7",
+            "root_type": "Expense",
+            "Custo das Mercadorias Vendidas": {
+                "account_number": "71",
+                "account_type": "Cost of Goods Sold"
+            },
+            "Custos com Pessoal": {
+                "account_number": "72",
+                "Remunerações - Órgãos Sociais": {
+                    "account_number": "721",
+                    "account_type": "Expense Account"
+                },
+                "Remunerações - Pessoal": {
+                    "account_number": "722",
+                    "account_type": "Expense Account"
+                },
+                "Encargos sobre Remunerações": {
+                    "account_number": "725",
+                    "account_type": "Expense Account"
+                },
+                "Seguros de Acidentes de Trabalho": {
+                    "account_number": "726",
+                    "account_type": "Expense Account"
+                },
+                "Outros Custos com o Pessoal": {
+                    "account_number": "728",
+                    "account_type": "Expense Account"
+                }
+            },
+            "Amortizações do Exercício": {
+                "account_number": "73",
+                "Imobilizações Corpóreas": {
+                    "account_number": "731",
+                    "account_type": "Depreciation"
+                },
+                "Imobilizações Incorpóreas": {
+                    "account_number": "732",
+                    "account_type": "Depreciation"
+                }
+            },
+            "Custos e Perdas": {
+                "account_number": "75",
+                "Fornecimentos e Serviços de Terceiros": {
+                    "account_number": "752",
+                    "account_type": "Expense Account"
+                },
+                "Impostos": {
+                    "account_number": "753",
+                    "Indirectos": {
+                        "account_number": "7531",
+                        "account_type": "Tax"
+                    }
+                },
+                "Outros Custos e Perdas Operacionais": {
+                    "account_number": "758",
+                    "Arredondamentos": {
+                        "account_number": "7581",
+                        "account_type": "Round Off"
+                    },
+                    "Custos Incluídos na Valorização de Existências": {
+                        "account_number": "7582",
+                        "account_type": "Expenses Included In Valuation"
+                    },
+                    "Custos Incluídos na Valorização de Imobilizado": {
+                        "account_number": "7583",
+                        "account_type": "Expenses Included In Asset Valuation"
+                    }
+                }
+            },
+            "Custos e Perdas Financeiros Gerais": {
+                "account_number": "76",
+                "Juros": {
+                    "account_number": "761",
+                    "account_type": "Expense Account"
+                },
+                "Diferenças de Câmbio Desfavoráveis": {
+                    "account_number": "762",
+                    "account_type": "Expense Account"
+                },
+                "Descontos de P/P Concedidos": {
+                    "account_number": "763",
+                    "account_type": "Expense Account"
+                },
+                "Serviços Bancários": {
+                    "account_number": "767",
+                    "account_type": "Expense Account"
+                }
+            },
+            "Outros Custos e Perdas não Operacionais": {
+                "account_number": "78",
+                "Perdas em Existências": {
+                    "account_number": "784",
+                    "Quebras": {
+                        "account_number": "7841",
+                        "account_type": "Stock Adjustment"
+                    }
+                },
+                "Multas e Penalidades": {
+                    "account_number": "786",
+                    "account_type": "Expense Account"
+                }
+            }
+        },
+        "Resultados": {
+            "account_number": "8",
+            "root_type": "Equity",
+            "Resultados Transitados": {
+                "account_number": "81",
+                "account_type": "Equity"
+            },
+            "Resultado Líquido do Exercício": {
+                "account_number": "88",
+                "account_type": "Equity"
+            }
+        }
+    }
+}

@@ -22,7 +22,9 @@
   "section_format",
   "company_nif_prefixes",
   "section_rules",
-  "rules_html"
+  "rules_html",
+  "section_company_setup",
+  "provide_angola_chart_and_taxes"
  ],
  "fields": [
   {
@@ -140,6 +142,18 @@
    "fieldname": "rules_html",
    "fieldtype": "HTML",
    "options": "<table class='table table-bordered small'><thead><tr><th>Customer Type</th><th>Format</th><th>Example</th></tr></thead><tbody><tr><td>Individual</td><td>9 digits, 2 capital letters, 3 digits (14 characters)</td><td><code>002282100LA037</code></td></tr><tr><td>Company</td><td>10 digits, all numeric, starting with 5</td><td><code>5002751267</code></td></tr></tbody></table>"
+  },
+  {
+   "fieldname": "section_company_setup",
+   "fieldtype": "Section Break",
+   "label": "Company Setup Data"
+  },
+  {
+   "default": "1",
+   "description": "Offer the Angola - Plano Geral de Contabilidade (PGC) chart when creating a company, and set up IVA 14% sales, purchase and item tax templates against the PGC accounts. Applies only when a company is created; existing companies are untouched. Off falls back to ERPNext's own Angola data (a single 10% VAT).",
+   "fieldname": "provide_angola_chart_and_taxes",
+   "fieldtype": "Check",
+   "label": "Provide Angola Chart of Accounts and IVA Templates"
   }
  ],
  "index_web_pages_for_search": 1,
