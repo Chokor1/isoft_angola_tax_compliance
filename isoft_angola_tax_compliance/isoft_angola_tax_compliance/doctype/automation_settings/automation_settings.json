@@ -1,0 +1,78 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2025-05-07 16:22:00.562777",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "customer_account_section",
+  "enable_generate_customer_account",
+  "customer_account_settings",
+  "supplier_account_section",
+  "enable_generate_supplier_account",
+  "supplier_account_settings"
+ ],
+ "fields": [
+  {
+   "fieldname": "customer_account_section",
+   "fieldtype": "Section Break",
+   "label": "Customer Account"
+  },
+  {
+   "default": "0",
+   "fieldname": "enable_generate_customer_account",
+   "fieldtype": "Check",
+   "label": "Enable"
+  },
+  {
+   "fieldname": "supplier_account_section",
+   "fieldtype": "Section Break",
+   "label": "Supplier Account"
+  },
+  {
+   "default": "0",
+   "fieldname": "enable_generate_supplier_account",
+   "fieldtype": "Check",
+   "label": "Enable"
+  },
+  {
+   "depends_on": "eval:doc.enable_generate_customer_account",
+   "fieldname": "customer_account_settings",
+   "fieldtype": "Table",
+   "label": "Settings",
+   "mandatory_depends_on": "eval:doc.enable_generate_customer_account",
+   "options": "Customer Account Setting"
+  },
+  {
+   "depends_on": "eval:doc.enable_generate_supplier_account",
+   "fieldname": "supplier_account_settings",
+   "fieldtype": "Table",
+   "label": "Settings",
+   "mandatory_depends_on": "eval:doc.enable_generate_supplier_account",
+   "options": "Supplier Account Setting"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "issingle": 1,
+ "links": [],
+ "modified": "2025-05-27 11:24:05.249888",
+ "modified_by": "Administrator",
+ "module": "Isoft Angola Tax Compliance",
+ "name": "Automation Settings",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC"
+}

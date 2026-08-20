@@ -1,0 +1,92 @@
+{
+ "category": "Modules",
+ "charts": [],
+ "creation": "2026-08-19 00:00:00.000000",
+ "developer_mode_only": 0,
+ "disable_user_customization": 0,
+ "docstatus": 0,
+ "doctype": "Workspace",
+ "extends_another_page": 0,
+ "hide_custom": 0,
+ "icon": "accounting",
+ "idx": 0,
+ "is_standard": 1,
+ "label": "Isoft Angola Tax Compliance",
+ "links": [
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Period Closing",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Angola Closing Voucher",
+   "link_to": "Angola Closing Voucher",
+   "link_type": "DocType",
+   "onboard": 1,
+   "type": "Link"
+  },
+  {
+   "dependencies": "Angola Closing Voucher",
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Closing Configuration Profile",
+   "link_to": "Closing Configuration Profile",
+   "link_type": "DocType",
+   "onboard": 1,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Withholding",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Angola NIF Validation Settings",
+   "link_to": "Angola NIF Validation Settings",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Invalid NIF",
+   "link_to": "Invalid NIF",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  }
+ ],
+ "modified": "2026-08-19 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Isoft Angola Tax Compliance",
+ "name": "Isoft Angola Tax Compliance",
+ "owner": "Administrator",
+ "pin_to_bottom": 0,
+ "pin_to_top": 0,
+ "shortcuts": [
+  {
+   "color": "Grey",
+   "label": "Angola Closing Voucher",
+   "link_to": "Angola Closing Voucher",
+   "type": "DocType"
+  },
+  {
+   "color": "Grey",
+   "label": "Closing Configuration Profile",
+   "link_to": "Closing Configuration Profile",
+   "type": "DocType"
+  }
+ ]
+}

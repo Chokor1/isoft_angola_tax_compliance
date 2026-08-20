@@ -1,0 +1,86 @@
+{
+ "actions": [],
+ "creation": "2026-06-22 00:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "accounts_section",
+  "company_accounts",
+  "adjustments_section",
+  "adjustment_accounts",
+  "options_section",
+  "restrict_posting_to_next_month"
+ ],
+ "fields": [
+  {
+   "fieldname": "accounts_section",
+   "fieldtype": "Section Break",
+   "label": "VAT Accounts"
+  },
+  {
+   "description": "One row per company. A company with no row here cannot run a VAT Assessment.",
+   "fieldname": "company_accounts",
+   "fieldtype": "Table",
+   "label": "VAT Accounts per Company",
+   "options": "VAT Assessment Company Account",
+   "reqd": 1
+  },
+  {
+   "fieldname": "adjustments_section",
+   "fieldtype": "Section Break",
+   "label": "VAT Adjustments (Regulações)"
+  },
+  {
+   "description": "Define one or more VAT adjustment accounts. Mark each as 'Favor do Estado' (increases payable) or 'Favor da Empresa' (decreases payable).",
+   "fieldname": "adjustment_accounts",
+   "fieldtype": "Table",
+   "label": "VAT Adjustment Accounts",
+   "options": "VAT Assessment Adjustment Account"
+  },
+  {
+   "fieldname": "options_section",
+   "fieldtype": "Section Break",
+   "label": "Options"
+  },
+  {
+   "default": "0",
+   "description": "When enabled, a VAT Assessment's Posting Date must fall within the month after the month it assesses. Off by default to allow any posting date.",
+   "fieldname": "restrict_posting_to_next_month",
+   "fieldtype": "Check",
+   "label": "Posting Date Must Be in Month After the Assessed Month"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "issingle": 1,
+ "links": [],
+ "modified": "2026-08-19 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Isoft Angola Tax Compliance",
+ "name": "VAT Assessment Settings",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "role": "Accounts Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC"
+}

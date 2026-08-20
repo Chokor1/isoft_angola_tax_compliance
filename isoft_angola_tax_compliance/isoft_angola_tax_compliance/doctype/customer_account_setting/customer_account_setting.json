@@ -1,0 +1,58 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2025-05-27 09:58:15.820428",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "currency",
+  "parent_account",
+  "digits",
+  "default"
+ ],
+ "fields": [
+  {
+   "fieldname": "currency",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Currency",
+   "options": "Currency",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "parent_account",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Parent Account",
+   "options": "Account",
+   "reqd": 1
+  },
+  {
+   "fieldname": "digits",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Digits",
+   "reqd": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "default",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Default"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2025-05-27 11:30:49.527268",
+ "modified_by": "Administrator",
+ "module": "Isoft Angola Tax Compliance",
+ "name": "Customer Account Setting",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC"
+}

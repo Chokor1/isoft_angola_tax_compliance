@@ -7,3 +7,5 @@
 # It now runs from the after_install / after_migrate hooks instead, so every
 # `bench update` re-checks and picks up anything new. It is idempotent and
 # additive, so running it every time costs nothing.
+
+isoft_angola_tax_compliance.patches.v1_0.vat_assessment_settings_per_company

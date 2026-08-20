@@ -66,6 +66,11 @@ doctype_js = {
 	"Sales Invoice": "public/js/sales_invoice.js",
 	"Quotation": "public/js/quotation.js",
 	"Tax Withholding Category": "public/js/tax_withholding_category.js",
+	# "Generate Account" for parties without an account row, moved out of ERPNext's
+	# own customer.js / supplier.js. Frappe merges doctype_js across apps, so these
+	# stack with ERPNext's rather than replacing them.
+	"Customer": "public/js/customer.js",
+	"Supplier": "public/js/supplier.js",
 }
 
 # Quotation posts no GL, so it needs no controller override -- only the
@@ -233,6 +238,9 @@ user_data_fields = [
 # ERPNext file. See overrides/sales_invoice.py.
 override_doctype_class = {
 	"Sales Invoice": "isoft_angola_tax_compliance.overrides.sales_invoice.AngolaSalesInvoice",
+	# Valuation taxes owed to a party post against that party. Pass-through when the
+	# tax row names none, which is every Purchase Receipt on this site so far.
+	"Purchase Receipt": "isoft_angola_tax_compliance.overrides.purchase_receipt.AngolaPurchaseReceipt",
 }
 
 # Live preview of the withholding rows before save (server validate stays
@@ -244,6 +252,11 @@ doctype_js = {
 	"Sales Invoice": "public/js/sales_invoice.js",
 	"Quotation": "public/js/quotation.js",
 	"Tax Withholding Category": "public/js/tax_withholding_category.js",
+	# "Generate Account" for parties without an account row, moved out of ERPNext's
+	# own customer.js / supplier.js. Frappe merges doctype_js across apps, so these
+	# stack with ERPNext's rather than replacing them.
+	"Customer": "public/js/customer.js",
+	"Supplier": "public/js/supplier.js",
 }
 
 # Quotation posts no GL, so it needs no controller override -- only the

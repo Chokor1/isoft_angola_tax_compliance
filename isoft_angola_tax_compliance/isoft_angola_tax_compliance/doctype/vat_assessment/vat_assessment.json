@@ -1,0 +1,266 @@
+{
+ "actions": [],
+ "autoname": "naming_series:",
+ "creation": "2026-06-22 00:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "naming_series",
+  "company",
+  "column_break_header",
+  "month",
+  "year",
+  "from_date",
+  "to_date",
+  "posting_date",
+  "period_section",
+  "deductible_vat",
+  "output_vat",
+  "withheld_vat_recoverable",
+  "column_break_amounts",
+  "adjustment_state",
+  "adjustment_company",
+  "results_section",
+  "net_vat_position",
+  "vat_position",
+  "column_break_results",
+  "amended_from",
+  "summary_section",
+  "account_summary",
+  "planned_entries_section",
+  "planned_entries",
+  "journal_entries_section",
+  "created_journal_entries"
+ ],
+ "fields": [
+  {
+   "default": "VAT-ASMT-.YYYY.-",
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "Series",
+   "options": "VAT-ASMT-.YYYY.-",
+   "reqd": 1
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Company",
+   "options": "Company",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_header",
+   "fieldtype": "Column Break"
+  },
+  {
+   "description": "The VAT assessment is done monthly. The period is the whole selected month.",
+   "fieldname": "month",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Month",
+   "options": "\nJanuary\nFebruary\nMarch\nApril\nMay\nJune\nJuly\nAugust\nSeptember\nOctober\nNovember\nDecember",
+   "reqd": 1
+  },
+  {
+   "fieldname": "year",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Year",
+   "non_negative": 1,
+   "reqd": 1
+  },
+  {
+   "description": "First day of the selected month.",
+   "fieldname": "from_date",
+   "fieldtype": "Date",
+   "label": "From Date",
+   "read_only": 1
+  },
+  {
+   "description": "Last day of the selected month.",
+   "fieldname": "to_date",
+   "fieldtype": "Date",
+   "label": "To Date",
+   "read_only": 1
+  },
+  {
+   "fieldname": "posting_date",
+   "fieldtype": "Date",
+   "label": "Posting Date",
+   "reqd": 1
+  },
+  {
+   "fieldname": "period_section",
+   "fieldtype": "Section Break",
+   "label": "Computed Balances"
+  },
+  {
+   "description": "Debit balance of the Deductible VAT account for the period.",
+   "fieldname": "deductible_vat",
+   "fieldtype": "Currency",
+   "label": "Deductible VAT",
+   "options": "company_currency",
+   "read_only": 1
+  },
+  {
+   "description": "Credit balance of the Output VAT account for the period.",
+   "fieldname": "output_vat",
+   "fieldtype": "Currency",
+   "label": "Output VAT",
+   "options": "company_currency",
+   "read_only": 1
+  },
+  {
+   "description": "Debit balance of the Withheld VAT Recoverable account for the period — VAT withheld at source by customers. Reduces the amount payable and is always cleared to zero by the assessment.",
+   "fieldname": "withheld_vat_recoverable",
+   "fieldtype": "Currency",
+   "label": "Withheld VAT Recoverable",
+   "options": "company_currency",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_amounts",
+   "fieldtype": "Column Break"
+  },
+  {
+   "description": "Total VAT adjustments in favour of the State (increase payable).",
+   "fieldname": "adjustment_state",
+   "fieldtype": "Currency",
+   "label": "Adjustments in Favour of the State",
+   "options": "company_currency",
+   "read_only": 1
+  },
+  {
+   "description": "Total VAT adjustments in favour of the company (decrease payable).",
+   "fieldname": "adjustment_company",
+   "fieldtype": "Currency",
+   "label": "Adjustments in Favour of the Company",
+   "options": "company_currency",
+   "read_only": 1
+  },
+  {
+   "fieldname": "results_section",
+   "fieldtype": "Section Break",
+   "label": "Result"
+  },
+  {
+   "description": "Output VAT - Deductible VAT - Withheld VAT Recoverable + Adjustments in Favour of the State - Adjustments in Favour of the Company. Positive = Payable, Negative = Recoverable.",
+   "fieldname": "net_vat_position",
+   "fieldtype": "Currency",
+   "label": "Net VAT Position",
+   "options": "company_currency",
+   "read_only": 1
+  },
+  {
+   "fieldname": "vat_position",
+   "fieldtype": "Select",
+   "label": "Position",
+   "options": "\nPayable\nRecoverable\nNil",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_results",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "VAT Assessment",
+   "print_hide": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "summary_section",
+   "fieldtype": "Section Break",
+   "label": "Account Breakdown"
+  },
+  {
+   "fieldname": "account_summary",
+   "fieldtype": "Table",
+   "label": "Account Summary",
+   "options": "VAT Assessment Account Summary",
+   "read_only": 1
+  },
+  {
+   "fieldname": "planned_entries_section",
+   "fieldtype": "Section Break",
+   "label": "Planned Journal Entries (Preview)"
+  },
+  {
+   "allow_on_submit": 1,
+   "description": "Preview of the journal entries that WILL be created. Nothing is posted until you click Create Draft.",
+   "fieldname": "planned_entries",
+   "fieldtype": "Table",
+   "label": "Planned Entries",
+   "options": "VAT Assessment Planned Entry"
+  },
+  {
+   "fieldname": "journal_entries_section",
+   "fieldtype": "Section Break",
+   "label": "Created Journal Entries"
+  },
+  {
+   "allow_on_submit": 1,
+   "description": "Journal Entries created for this assessment, with their live status.",
+   "fieldname": "created_journal_entries",
+   "fieldtype": "Table",
+   "label": "Journal Entries",
+   "options": "VAT Assessment Journal Entry"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "is_submittable": 1,
+ "links": [],
+ "modified": "2026-06-22 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Isoft Angola Tax Compliance",
+ "name": "VAT Assessment",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "amend": 1,
+   "cancel": 1,
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Accounts Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Accounts User",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "amend": 1,
+   "cancel": 1,
+   "create": 1,
+   "delete": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "title_field": "company"
+}

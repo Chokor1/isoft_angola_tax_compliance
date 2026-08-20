@@ -14,11 +14,15 @@ from frappe.custom.doctype.property_setter.property_setter import make_property_
 
 from isoft_angola_tax_compliance.custom_fields import get_custom_fields
 
+# This app's Frappe module, as named in modules.txt.
+MODULE = "Isoft Angola Tax Compliance"
+
 
 def after_install():
 	setup_custom_fields()
 	remove_retired_doctypes()
 	hide_superseded_core_fields()
+	adopt_closing_configuration_profiles()
 	seed_from_legacy_configuration()
 
 
@@ -26,6 +30,7 @@ def after_migrate():
 	setup_custom_fields()
 	remove_retired_doctypes()
 	hide_superseded_core_fields()
+	adopt_closing_configuration_profiles()
 	seed_from_legacy_configuration()
 
 
@@ -41,6 +46,11 @@ RETIRED_DOCTYPES = [
 	# Recorded the legacy figure beside the new one during the cutover. The
 	# legacy path no longer exists, so there is nothing to compare against.
 	"Withholding Comparison Log",
+	# Was the profile table on ERPNext's Period Closing Voucher, back when the
+	# Angolan closing ran as a second "closing method" inside that core doctype.
+	# Period Closing Voucher has been restored to stock and the closing now lives
+	# in Angola Closing Voucher, which carries its own profile table.
+	"Pro Closing Voucher Profiles",
 ]
 
 
@@ -60,6 +70,73 @@ def remove_retired_doctypes():
 		print(f"  Angola withholding: removed retired doctype(s) {removed}")
 
 	return removed
+
+
+# Closing Configuration Profile and its source-accounts child table used to ship
+# inside ERPNext's Accounts module, because the closing they drive was patched
+# into Period Closing Voucher. Both now belong to this app. The doctype names are
+# unchanged, so every existing profile and its rows survive the move untouched.
+ADOPTED_DOCTYPES = [
+	"Closing Configuration Profile",
+	"Closing Configuration Profile Source Accounts",
+]
+
+
+def adopt_closing_configuration_profiles():
+	"""Re-home the closing profile doctypes and give existing rows a company.
+
+	Idempotent: both steps are no-ops once they have been applied.
+	"""
+	moved = []
+	for doctype in ADOPTED_DOCTYPES:
+		if not frappe.db.exists("DocType", doctype):
+			continue
+		if frappe.db.get_value("DocType", doctype, "module") == MODULE:
+			continue
+		frappe.db.set_value("DocType", doctype, "module", MODULE, update_modified=False)
+		moved.append(doctype)
+
+	if moved:
+		print(f"  Angola closing: moved {moved} into {MODULE}")
+
+	backfilled = backfill_profile_company()
+
+	if moved or backfilled:
+		frappe.db.commit()
+
+
+def backfill_profile_company():
+	"""Give pre-existing profiles the company of their destination account.
+
+	`company` is mandatory on the profile now, so a profile left without one
+	could not be saved again. The destination account is mandatory and carries a
+	company, which makes it the reliable source.
+	"""
+	if not frappe.db.exists("DocType", "Closing Configuration Profile"):
+		return []
+
+	if "company" not in frappe.db.get_table_columns("Closing Configuration Profile"):
+		# The doctype has not been synced yet; the next migrate will come back here.
+		return []
+
+	rows = frappe.db.sql(
+		"""
+		select p.name, a.company
+		from `tabClosing Configuration Profile` p
+		join `tabAccount` a on a.name = p.destination_account
+		where ifnull(p.company, '') = '' and ifnull(a.company, '') != ''
+		""",
+		as_dict=True,
+	)
+	for row in rows:
+		frappe.db.set_value(
+			"Closing Configuration Profile", row.name, "company", row.company, update_modified=False
+		)
+
+	if rows:
+		print(f"  Angola closing: set company on {len(rows)} closing profile(s)")
+
+	return [row.name for row in rows]
 
 
 # Core ERPNext fields this app supersedes, hidden via Property Setter rather
