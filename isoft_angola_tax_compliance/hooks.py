@@ -59,7 +59,7 @@ app_license = "MIT"
 # before_install = "isoft_angola_tax_compliance.install.before_install"
 # # Live preview of the withholding rows before save (server validate stays
 # authoritative). Frappe merges doctype_js across apps, so this stacks with the
-# Sales Invoice JS already contributed by isoft_picking / AGT / intelize.
+# Sales Invoice JS already contributed by isoft_warehouse_location_management / AGT / intelize.
 app_include_js = "/assets/isoft_angola_tax_compliance/js/withholding_preview.js"
 
 doctype_js = {
@@ -245,7 +245,7 @@ override_doctype_class = {
 
 # Live preview of the withholding rows before save (server validate stays
 # authoritative). Frappe merges doctype_js across apps, so this stacks with the
-# Sales Invoice JS already contributed by isoft_picking / AGT / intelize.
+# Sales Invoice JS already contributed by isoft_warehouse_location_management / AGT / intelize.
 app_include_js = "/assets/isoft_angola_tax_compliance/js/withholding_preview.js"
 
 doctype_js = {
