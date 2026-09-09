@@ -19,5 +19,15 @@ def _install_runtime_patches():
 	except Exception:
 		pass
 
+	# Payment Entry / Payment Reconciliation: present the fiscal grand total as
+	# the invoice amount and the withholding as already settled, now that the
+	# GL carries only the net receivable. See withholding/outstanding.py.
+	try:
+		from isoft_angola_tax_compliance.withholding.outstanding import install
+
+		install()
+	except Exception:
+		pass
+
 
 _install_runtime_patches()
