@@ -168,7 +168,10 @@ def _merge_pair(pair):
 		{side: new_base, side + "_in_account_currency": new_acc, "against": against},
 		update_modified=False,
 	)
-	frappe.delete_doc("GL Entry", w.name, force=True, ignore_permissions=True, delete_permanently=True)
+	# frappe.delete_doc refuses submitted rows even with force=True on v13;
+	# ERPNext's own delete_gl_entries (accounts/utils.py) deletes GL rows with
+	# plain SQL, and so do we.
+	frappe.db.sql("DELETE FROM `tabGL Entry` WHERE name = %s", w.name)
 
 
 def _write_backup(plan):
