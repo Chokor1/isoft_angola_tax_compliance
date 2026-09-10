@@ -9,4 +9,7 @@
 # additive, so running it every time costs nothing.
 
 isoft_angola_tax_compliance.patches.v1_0.vat_assessment_settings_per_company
-isoft_angola_tax_compliance.patches.v1_0.merge_withholding_credit_into_receivable
+# merge_withholding_credit_into_receivable is deliberately NOT listed: it netted
+# the withholding into the receivable debit, which was reversed on 2026-09-10.
+# The module is kept because production ran it and its backup files refer to it.
+isoft_angola_tax_compliance.patches.v1_0.split_withholding_credit_from_receivable

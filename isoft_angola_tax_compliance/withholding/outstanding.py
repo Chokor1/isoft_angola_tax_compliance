@@ -8,21 +8,32 @@ invoice amount, and any credit against that voucher as the amount already
 paid. Payment Entry ("Get Outstanding Invoices") and Payment Reconciliation
 both build their rows from it.
 
-Since 2026-09-09 the engine nets the withholding into the receivable debit
-(see gl.py), so for a 114,000 invoice with 13,500 withheld ERPNext would show
-an invoice of 100,500. The customer, the accountant and the AGT all know the
-invoice as 114,000, so this wrapper restores that presentation:
+`invoice_amount` is `sum(debit - credit)` per voucher, so a withheld invoice
+arrives here net: a 114,000 invoice with 13,500 retained is presented as an
+invoice of 100,500. The customer, the accountant and the AGT all know it as
+114,000, so this wrapper restores that presentation:
 
     invoice_amount   100,500 -> 114,000   (grand total)
     payment_amount         0 ->  13,500   (withholding, already settled)
     outstanding      100,500    unchanged
 
-Nothing is written; the GL and `outstanding_amount` are untouched. Invoices
-without engine withholding rows (pre-cutover ones, whose withholding sits in
-a Journal Entry that ERPNext already counts as a payment) are left alone, and
-so is any row whose amounts do not add up to the invoice total exactly --
-that guards against double counting an invoice that still has the old
-two-row ledger.
+It has to handle two ledger shapes, and the difference decides whether the
+withholding is already inside upstream's `payment_amount`:
+
+  * **two rows on the receivable** (what gl.py posts): the credit row carries
+    `against_voucher`, so upstream already counted the 13,500 as a payment.
+    Left as it is, upstream would then subtract it a second time and report an
+    outstanding of 87,000. Only `invoice_amount` is lifted to the grand total.
+  * **one netted row** (invoices posted between 2026-09-09 and this change, and
+    any the split patch could not reshape): nothing was counted, so the
+    withholding is added to `payment_amount`.
+
+`outstanding_amount` is then recomputed from the two, and comes to the same
+100,500 either way. Nothing is written; the GL and the invoice's own
+`outstanding_amount` field are untouched. Invoices without engine withholding
+rows (pre-cutover ones, whose withholding sits in a Journal Entry that ERPNext
+already counts as a payment) are left alone, and so is any row whose amounts do
+not add up to the invoice total exactly.
 
 Installed by `install()` from the package __init__, following the same
 runtime-wrapping pattern as angola_setup: patch the defining module and every
@@ -82,6 +93,28 @@ def _present_fiscal_totals(invoices, party_type, company):
 
 	company_currency = frappe.get_cached_value("Company", company, "default_currency")
 	by_name = {r.name: r for r in rows}
+	precision = frappe.get_precision("Sales Invoice", "outstanding_amount") or 2
+
+	# Withholding the invoice settled against itself. Mirrors upstream's own
+	# per-row test (`credit - debit > 0` on the party account, against_voucher
+	# set), restricted to rows the invoice posted itself -- so it is non-zero
+	# exactly when upstream has already counted the withholding as a payment.
+	settled = dict(
+		frappe.db.sql(
+			"""SELECT voucher_no,
+			          SUM(credit_in_account_currency - debit_in_account_currency)
+			   FROM `tabGL Entry`
+			   WHERE voucher_type = 'Sales Invoice'
+			     AND voucher_no IN %(names)s
+			     AND against_voucher = voucher_no
+			     AND party_type = 'Customer'
+			     AND is_cancelled = 0
+			     AND credit_in_account_currency - debit_in_account_currency > 0
+			   GROUP BY voucher_no""",
+			{"names": names},
+		)
+		or []
+	)
 
 	for d in invoices:
 		r = by_name.get(d.voucher_no)
@@ -105,7 +138,11 @@ def _present_fiscal_totals(invoices, party_type, company):
 			continue
 
 		d.invoice_amount = total
-		d.payment_amount = flt(d.get("payment_amount")) + withheld
+		if abs(flt(settled.get(d.voucher_no)) - withheld) > TOLERANCE:
+			# Netted ledger: upstream saw no credit row, so the withholding is
+			# not in payment_amount yet.
+			d.payment_amount = flt(d.get("payment_amount")) + withheld
+		d.outstanding_amount = flt(total - flt(d.get("payment_amount")), precision)
 
 
 def install():

@@ -20,12 +20,22 @@ def _install_runtime_patches():
 		pass
 
 	# Payment Entry / Payment Reconciliation: present the fiscal grand total as
-	# the invoice amount and the withholding as already settled, now that the
-	# GL carries only the net receivable. See withholding/outstanding.py.
+	# the invoice amount and the withholding as already settled, instead of the
+	# net the receivable balance comes to. See withholding/outstanding.py.
 	try:
 		from isoft_angola_tax_compliance.withholding.outstanding import install
 
 		install()
+	except Exception:
+		pass
+
+	# General Ledger: keep the invoice and the amount retained on separate lines
+	# of the customer account, which the consolidated view would fold into one.
+	# See withholding/ledger_report.py.
+	try:
+		from isoft_angola_tax_compliance.withholding.ledger_report import install as install_gl_report
+
+		install_gl_report()
 	except Exception:
 		pass
 

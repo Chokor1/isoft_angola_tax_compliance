@@ -2,14 +2,26 @@
 # For license information, please see license.txt
 """Books the withholding inside the Sales Invoice's own GL entries.
 
-    Dr  Imposto Industrial Retido na Fonte      6,500
-    Dr  IVA Cativo Retido                       7,000
-    Cr  Clientes  [party = customer]           13,500
+    Dr  Clientes  [party = customer]          114,000   <- ERPNext's own row
+    Cr  IVA Liquidado                          14,000
+    Cr  Vendas                                100,000
+    Dr  Imposto Industrial Retido na Fonte      6,500   <- this module
+    Dr  IVA Cativo Retido                       7,000   <- this module
+    Cr  Clientes  [party = customer]           13,500   <- this module
 
-One debit per withholding row, one aggregate credit against the receivable.
+One debit per withholding row, plus one aggregate credit on the receivable.
+
+The customer's debit keeps the **fiscal total of the invoice** and the amount
+retained sits on a **separate row of its own**. It is never subtracted from the
+debit: the customer ledger, the statement and the aging must show the invoice as
+it was issued, with the retention visible as a distinct movement, exactly as it
+appears on the printed invoice. Sales Invoice calls `make_gl_entries` with
+`merge_entries=False`, so the two rows on the receivable are never folded into
+one line.
+
 `grand_total` is untouched, so SAF-T GrossTotal and the AGT payload stay
 correct; `outstanding_amount` drops automatically because ERPNext derives it
-from the GL balance on `debit_to` with `against_voucher`.
+from the GL balance on `debit_to` with `against_voucher`, and both rows carry it.
 
 Doing it here rather than in a separate Journal Entry is what makes cancel,
 amend and repost atomic, and what keeps the posting date, conversion rate and
@@ -49,37 +61,39 @@ def add_withholding_gl_entries(doc, gl_entries):
 	against = ", ".join(withholding_accounts)
 	party_amount = total_base if doc.party_account_currency == doc.company_currency else total
 
+	# The receivable debit ERPNext already booked is left at the fiscal total;
+	# only its `against` is extended so the ledger names the counter-accounts.
 	receivable = _find_receivable_entry(doc, gl_entries)
 	if receivable:
-		receivable.debit = flt(receivable.debit) - total_base
-		receivable.debit_in_account_currency = (
-			flt(receivable.debit_in_account_currency) - party_amount
-		)
 		existing_against = [a for a in (receivable.against or "").split(", ") if a]
 		receivable.against = ", ".join(
 			existing_against + [a for a in withholding_accounts if a not in existing_against]
 		)
-	else:
-		gl_entries.append(
-			doc.get_gl_dict(
-				{
-					"account": doc.debit_to,
-					"party_type": "Customer",
-					"party": doc.customer,
-					"against": against,
-					"credit": total_base,
-					"credit_in_account_currency": party_amount,
-					"against_voucher": (
-						doc.return_against if cint(doc.is_return) and doc.return_against else doc.name
-					),
-					"against_voucher_type": doc.doctype,
-					"cost_center": doc.cost_center or default_cost_center,
-					"project": doc.get("project"),
-				},
-				doc.party_account_currency,
-				item=doc,
-			)
+
+	remarks = ", ".join(
+		dict.fromkeys(r.description for r in rows if flt(r.base_withholding_amount) and r.description)
+	)
+	gl_entries.append(
+		doc.get_gl_dict(
+			{
+				"account": doc.debit_to,
+				"party_type": "Customer",
+				"party": doc.customer,
+				"against": against,
+				"credit": total_base,
+				"credit_in_account_currency": party_amount,
+				"against_voucher": (
+					doc.return_against if cint(doc.is_return) and doc.return_against else doc.name
+				),
+				"against_voucher_type": doc.doctype,
+				"cost_center": doc.cost_center or default_cost_center,
+				"project": doc.get("project"),
+				"remarks": remarks or None,
+			},
+			doc.party_account_currency,
+			item=doc,
 		)
+	)
 
 	for row in rows:
 		if not flt(row.base_withholding_amount):
