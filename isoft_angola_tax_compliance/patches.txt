@@ -13,3 +13,6 @@ isoft_angola_tax_compliance.patches.v1_0.vat_assessment_settings_per_company
 # the withholding into the receivable debit, which was reversed on 2026-09-10.
 # The module is kept because production ran it and its backup files refer to it.
 isoft_angola_tax_compliance.patches.v1_0.split_withholding_credit_from_receivable
+# must stay after the line above: that one turns a netted ledger into a single
+# aggregate withholding credit, this one splits it into one credit per withholding
+isoft_angola_tax_compliance.patches.v1_0.split_customer_credit_per_withholding

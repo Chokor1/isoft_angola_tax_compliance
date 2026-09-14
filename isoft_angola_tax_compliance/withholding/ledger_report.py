@@ -2,21 +2,22 @@
 # For license information, please see license.txt
 """Keep a party's debit and its credit on separate lines of the General Ledger.
 
-`withholding/gl.py` books two rows on the customer account: the invoice at its
-fiscal total, and the amount retained (IVA cativo / retencao) as a movement of
-its own. That is what the ledger stores.
+`withholding/gl.py` books the customer account as the invoice at its fiscal
+total, plus one credit per amount retained -- retencao na fonte and IVA cativo
+each against its own account. That is what the ledger stores.
 
 The General Ledger report's default view, **Group by Voucher (Consolidated)**,
 then folds them back together: its key is
-`(voucher_type, voucher_no, account, party_type, party)`, so both rows land on
-one line carrying a debit of 11,019,240 *and* a credit of 1,352,168.57 —
-precisely the presentation the two rows exist to avoid.
+`(voucher_type, voucher_no, account, party_type, party)`, so all of them land on
+one line carrying a debit of 11,019,240 *and* a credit of 1,352,168.57 --
+precisely the presentation the separate rows exist to avoid.
 
-This wrapper runs the upstream function untouched and splits any consolidated
-**party** line that ended up with both sides back into two lines, taking the
-`against` and `remarks` of each side from the underlying entries. Totals are
-untouched: the two halves add up to the line they replace. Non-party lines
-(income, VAT, stock) keep consolidating exactly as before — one line per
+This wrapper runs the upstream function untouched and re-expands any
+consolidated **party** line that ended up with both sides into one line per side
+and counter-account (`against`), with amounts taken from a snapshot of the
+entries made before upstream consolidates them. Totals are untouched: the lines
+add up to the one they replace, or the original line is kept. Non-party lines
+(income, VAT, stock) keep consolidating exactly as before -- one line per
 account per voucher is the point of that view.
 
 `Show Net Values in Party Account` is left alone: ticking it is an explicit
@@ -38,68 +39,97 @@ _upstream = None
 _installed = False
 
 
+AMOUNT_FIELDS = ("debit", "credit", "debit_in_account_currency", "credit_in_account_currency")
+
+
 def get_accountwise_gle(filters, accounting_dimensions, gl_entries, gle_map):
+	sources = None
+	if filters.get("group_by") == CONSOLIDATED and not filters.get("show_net_values_in_party_account"):
+		try:
+			# Taken before upstream runs: its consolidation adds every row's amounts
+			# into the first row object of the group, so afterwards the entries
+			# themselves no longer hold their own amounts.
+			sources = _snapshot_party_rows(gl_entries)
+		except Exception:
+			frappe.log_error(frappe.get_traceback(), "atc: general ledger party lines")
+
 	totals, entries = _upstream(filters, accounting_dimensions, gl_entries, gle_map)
+	if not sources:
+		return totals, entries
 
 	try:
-		if filters.get("group_by") != CONSOLIDATED or filters.get("show_net_values_in_party_account"):
-			return totals, entries
-		return totals, _split_party_lines(entries, gl_entries)
+		return totals, _split_party_lines(entries, sources)
 	except Exception:
 		frappe.log_error(frappe.get_traceback(), "atc: general ledger party lines")
 		return totals, entries
 
 
-def _split_party_lines(entries, gl_entries):
+def _key(gle):
+	return (gle.get("voucher_type"), gle.get("voucher_no"), gle.get("account"), gle.get("party"))
+
+
+def _snapshot_party_rows(gl_entries):
 	sources = {}
 	for gle in gl_entries:
 		if not gle.get("party"):
 			continue
-		key = (gle.get("voucher_type"), gle.get("voucher_no"), gle.get("account"), gle.get("party"))
-		sources.setdefault(key, []).append(gle)
+		snap = frappe._dict({f: flt(gle.get(f)) for f in AMOUNT_FIELDS})
+		snap.against = gle.get("against") or ""
+		snap.remarks = gle.get("remarks")
+		sources.setdefault(_key(gle), []).append(snap)
+	return sources
 
+
+def _split_party_lines(entries, sources):
 	out = []
 	for entry in entries:
 		if not (entry.get("party") and flt(entry.get("debit")) and flt(entry.get("credit"))):
 			out.append(entry)
 			continue
-
-		key = (
-			entry.get("voucher_type"),
-			entry.get("voucher_no"),
-			entry.get("account"),
-			entry.get("party"),
-		)
-		rows = sources.get(key) or []
-		out.append(_side(entry, rows, "debit"))
-		out.append(_side(entry, rows, "credit"))
-
+		out.extend(_lines(entry, sources.get(_key(entry)) or []) or [entry])
 	return out
 
 
-def _side(entry, rows, side):
-	"""One half of a consolidated party line, described by its own entries."""
-	other = "credit" if side == "debit" else "debit"
+def _lines(entry, rows):
+	"""A consolidated party line re-expanded to one line per side and counter-account.
 
-	line = entry.copy()
-	line[other] = 0.0
-	line[other + "_in_account_currency"] = 0.0
+	Rows on the same side against the same accounts still add up into one line;
+	only another side or another counter-account opens a new one -- so the invoice
+	debit, the retencao credit and the IVA cativo credit each get a line. Returns
+	nothing (the entry stays as upstream built it) unless the lines add up to it.
+	"""
+	groups = {}
+	for r in rows:
+		if r.debit and r.credit:
+			return []
+		if not (r.debit or r.credit):
+			continue
+		side = "debit" if r.debit else "credit"
+		groups.setdefault((side, r.against), []).append(r)
 
-	own = [r for r in rows if flt(r.get(side)) and not flt(r.get(other))]
-	if own:
-		against = ", ".join(
-			dict.fromkeys(a for r in own for a in (r.get("against") or "").split(", ") if a)
-		)
+	lines = []
+	for (side, against), members in groups.items():
+		other = "credit" if side == "debit" else "debit"
+		line = entry.copy()
+		line[side] = sum(r[side] for r in members)
+		line[side + "_in_account_currency"] = sum(r[side + "_in_account_currency"] for r in members)
+		line[other] = 0.0
+		line[other + "_in_account_currency"] = 0.0
 		if against:
 			line["against"] = against
-
 		remarks = ", ".join(
-			dict.fromkeys(r.get("remarks") for r in own if r.get("remarks") and r.get("remarks") != "No Remarks")
+			dict.fromkeys(
+				r.remarks for r in members if r.remarks and r.remarks != "No Remarks"
+			)
 		)
 		if remarks:
 			line["remarks"] = remarks
+		lines.append(line)
 
-	return line
+	for side in ("debit", "credit"):
+		if abs(sum(flt(l[side]) for l in lines) - flt(entry.get(side))) > 0.01:
+			return []
+	return lines
 
 
 def install():
