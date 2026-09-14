@@ -58,19 +58,13 @@ def add_withholding_gl_entries(doc, gl_entries):
 		return gl_entries
 
 	default_cost_center = frappe.get_cached_value("Company", doc.company, "cost_center")
-	withholding_accounts = sorted({r.account_head for r in rows if r.account_head})
 	party_in_company_currency = doc.party_account_currency == doc.company_currency
 	against_voucher = doc.return_against if cint(doc.is_return) and doc.return_against else doc.name
 
-	# The receivable debit ERPNext already booked is left at the fiscal total;
-	# only its `against` is extended so the ledger names the counter-accounts.
-	receivable = _find_receivable_entry(doc, gl_entries)
-	if receivable:
-		existing_against = [a for a in (receivable.against or "").split(", ") if a]
-		receivable.against = ", ".join(
-			existing_against + [a for a in withholding_accounts if a not in existing_against]
-		)
-
+	# ERPNext's own receivable row is left exactly as booked: the fiscal total,
+	# against the income accounts. The withholdings face the customer on rows of
+	# their own below, so they are not named on the invoice row too.
+	#
 	# One credit on the customer per withholding: retencao and IVA cativo each on
 	# a line of their own, against the account that withholding is booked to.
 	for row in rows:
@@ -127,24 +121,3 @@ def add_withholding_gl_entries(doc, gl_entries):
 		)
 
 	return gl_entries
-
-
-def _find_receivable_entry(doc, gl_entries):
-	"""The debit ERPNext booked on `debit_to` for this customer in `make_customer_gl_entry`.
-
-	Matched on account + party + against_voucher so a POS payment credit or a
-	write-off row on the same account is never picked by mistake.
-	"""
-	against_voucher = (
-		doc.return_against if cint(doc.is_return) and doc.return_against else doc.name
-	)
-	for entry in gl_entries:
-		if (
-			entry.get("account") == doc.debit_to
-			and entry.get("party_type") == "Customer"
-			and entry.get("party") == doc.customer
-			and entry.get("against_voucher") == against_voucher
-			and flt(entry.get("debit"))
-		):
-			return entry
-	return None

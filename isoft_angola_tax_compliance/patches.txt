@@ -16,3 +16,4 @@ isoft_angola_tax_compliance.patches.v1_0.split_withholding_credit_from_receivabl
 # must stay after the line above: that one turns a netted ledger into a single
 # aggregate withholding credit, this one splits it into one credit per withholding
 isoft_angola_tax_compliance.patches.v1_0.split_customer_credit_per_withholding
+isoft_angola_tax_compliance.patches.v1_0.restore_receivable_against_income_accounts
