@@ -251,6 +251,8 @@ app_include_js = "/assets/isoft_angola_tax_compliance/js/withholding_preview.js"
 doctype_js = {
 	"Sales Invoice": "public/js/sales_invoice.js",
 	"Quotation": "public/js/quotation.js",
+	# Debit notes: expense account per Return Account Settings.
+	"Purchase Invoice": "public/js/purchase_invoice.js",
 	"Tax Withholding Category": "public/js/tax_withholding_category.js",
 	# "Generate Account" for parties without an account row, moved out of ERPNext's
 	# own customer.js / supplier.js. Frappe merges doctype_js across apps, so these
@@ -269,7 +271,15 @@ doc_events = {
 		],
 	},
 	"Sales Invoice": {
-		"validate": "isoft_angola_tax_compliance.nif.validate_transaction",
+		"validate": [
+			"isoft_angola_tax_compliance.nif.validate_transaction",
+			# Credit notes: income account per Return Account Settings (returns.py).
+			"isoft_angola_tax_compliance.returns.apply_to_sales_invoice",
+		],
+	},
+	# Debit notes: expense account per Return Account Settings (returns.py).
+	"Purchase Invoice": {
+		"validate": "isoft_angola_tax_compliance.returns.apply_to_purchase_invoice",
 	},
 	# Stamp the withholding category on newly created items, per the rules on
 	# the categories themselves. Insert only, and only when the field is empty.

@@ -1,0 +1,51 @@
+{
+ "actions": [],
+ "creation": "2026-09-15 00:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "company",
+  "invoice_account",
+  "return_account"
+ ],
+ "fields": [
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Company",
+   "options": "Company",
+   "reqd": 1
+  },
+  {
+   "description": "Account used on the original invoice lines, e.g. 61 Vendas.",
+   "fieldname": "invoice_account",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Invoice Account",
+   "options": "Account",
+   "reqd": 1
+  },
+  {
+   "description": "Account to use instead on the credit / debit note lines, e.g. 62.",
+   "fieldname": "return_account",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Credit / Debit Note Account",
+   "options": "Account",
+   "reqd": 1
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2026-09-15 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Isoft Angola Tax Compliance",
+ "name": "Return Account Mapping",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC"
+}

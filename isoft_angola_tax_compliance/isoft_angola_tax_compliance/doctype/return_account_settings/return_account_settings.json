@@ -1,0 +1,81 @@
+{
+ "actions": [],
+ "creation": "2026-09-15 00:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "enabled",
+  "sales_section",
+  "sales_mappings",
+  "purchase_section",
+  "purchase_mappings"
+ ],
+ "fields": [
+  {
+   "default": "0",
+   "description": "When a credit note (Sales Invoice return) or debit note (Purchase Invoice return) is made, lines whose account appears below are moved to the mapped account. Accounts not listed stay as they are on the original invoice.",
+   "fieldname": "enabled",
+   "fieldtype": "Check",
+   "label": "Use Different Accounts on Credit / Debit Notes"
+  },
+  {
+   "depends_on": "enabled",
+   "fieldname": "sales_section",
+   "fieldtype": "Section Break",
+   "label": "Credit Notes (Sales Invoice Returns)"
+  },
+  {
+   "description": "Income account on the Sales Invoice line → account to use on the credit note line.",
+   "fieldname": "sales_mappings",
+   "fieldtype": "Table",
+   "label": "Income Account Mapping",
+   "options": "Return Account Mapping"
+  },
+  {
+   "depends_on": "enabled",
+   "fieldname": "purchase_section",
+   "fieldtype": "Section Break",
+   "label": "Debit Notes (Purchase Invoice Returns)"
+  },
+  {
+   "description": "Expense account on the Purchase Invoice line → account to use on the debit note line.",
+   "fieldname": "purchase_mappings",
+   "fieldtype": "Table",
+   "label": "Expense Account Mapping",
+   "options": "Return Account Mapping"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "issingle": 1,
+ "links": [],
+ "modified": "2026-09-15 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Isoft Angola Tax Compliance",
+ "name": "Return Account Settings",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "role": "Accounts Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC"
+}
