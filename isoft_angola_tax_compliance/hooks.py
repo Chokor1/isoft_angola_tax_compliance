@@ -289,7 +289,12 @@ doc_events = {
 	# Angolan NIF format check. Off until enabled in Angola NIF Validation
 	# Settings, and warns rather than blocks unless configured otherwise.
 	"Customer": {
-		"validate": "isoft_angola_tax_compliance.nif.validate_customer",
+		"validate": [
+			"isoft_angola_tax_compliance.nif.validate_customer",
+			# Customer name rules (digits, e-mail addresses, symbols, length).
+			# Off until enabled in the same settings; see customer_name.py.
+			"isoft_angola_tax_compliance.customer_name.validate",
+		],
 	},
 }
 

@@ -23,6 +23,16 @@
   "company_nif_prefixes",
   "section_rules",
   "rules_html",
+  "section_customer_name",
+  "validate_customer_name",
+  "customer_name_enforcement",
+  "name_applies_to",
+  "name_min_length",
+  "column_break_customer_name",
+  "name_reject_digits",
+  "name_reject_email",
+  "name_reject_symbols",
+  "name_exempt",
   "section_company_setup",
   "provide_angola_chart_and_taxes"
  ],
@@ -144,6 +154,79 @@
    "options": "<table class='table table-bordered small'><thead><tr><th>Customer Type</th><th>Format</th><th>Example</th></tr></thead><tbody><tr><td>Individual</td><td>9 digits, 2 capital letters, 3 digits (14 characters)</td><td><code>002282100LA037</code></td></tr><tr><td>Company</td><td>10 digits, all numeric, starting with 5</td><td><code>5002751267</code></td></tr></tbody></table>"
   },
   {
+   "fieldname": "section_customer_name",
+   "fieldtype": "Section Break",
+   "label": "Customer Name"
+  },
+  {
+   "fieldname": "validate_customer_name",
+   "fieldtype": "Check",
+   "label": "Validate Customer Name",
+   "default": "0",
+   "description": "Check the customer's name when a Customer is saved. Independent of the NIF check above: it works even with NIF validation off."
+  },
+  {
+   "fieldname": "customer_name_enforcement",
+   "fieldtype": "Select",
+   "label": "Enforcement",
+   "options": "Warn\nBlock",
+   "default": "Warn",
+   "depends_on": "validate_customer_name",
+   "description": "Warn lets the record be saved; Block refuses it. In POS the Enforcement in POS setting above is used instead, so a cashier is never blocked."
+  },
+  {
+   "fieldname": "name_applies_to",
+   "fieldtype": "Select",
+   "label": "Digit Rule Applies To",
+   "options": "Individuals Only\nAll Customers",
+   "default": "Individuals Only",
+   "depends_on": "validate_customer_name",
+   "description": "Company names legitimately contain digits (ANGOLA 2000, 1º De AGOSTO), so the digit rule is limited to individuals by default."
+  },
+  {
+   "fieldname": "name_min_length",
+   "fieldtype": "Int",
+   "label": "Minimum Length",
+   "default": "3",
+   "depends_on": "validate_customer_name",
+   "description": "0 disables this rule."
+  },
+  {
+   "fieldname": "column_break_customer_name",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "name_reject_digits",
+   "fieldtype": "Check",
+   "label": "Reject Digits (0-9)",
+   "default": "1",
+   "depends_on": "validate_customer_name",
+   "description": "\"JOAO 2\" is refused. Limited by Digit Rule Applies To."
+  },
+  {
+   "fieldname": "name_reject_email",
+   "fieldtype": "Check",
+   "label": "Reject E-mail Addresses and Links",
+   "default": "1",
+   "depends_on": "validate_customer_name",
+   "description": "Catches records named after the contact's e-mail, e.g. pedro2020@gmail.com."
+  },
+  {
+   "fieldname": "name_reject_symbols",
+   "fieldtype": "Check",
+   "label": "Reject Unusual Symbols",
+   "default": "0",
+   "depends_on": "validate_customer_name",
+   "description": "Allows letters, digits, spaces and . , - ' ´ ` & / ( ) º ª + # : only. Off by default: real names use (SU), N´KALA and 1º."
+  },
+  {
+   "fieldname": "name_exempt",
+   "fieldtype": "Small Text",
+   "label": "Always Accept These Names",
+   "depends_on": "validate_customer_name",
+   "description": "One name per line, matched exactly (case and spacing ignored). Use for names that must keep digits or symbols."
+  },
+  {
    "fieldname": "section_company_setup",
    "fieldtype": "Section Break",
    "label": "Company Setup Data"
@@ -159,7 +242,7 @@
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2026-07-31 00:00:00.000000",
+ "modified": "2026-09-23 00:00:00.000000",
  "modified_by": "Administrator",
  "module": "Isoft Angola Tax Compliance",
  "name": "Angola NIF Validation Settings",
