@@ -73,8 +73,15 @@ def _read_charts():
 	return charts
 
 
+@frappe.whitelist()
 def get_charts_for_country(country, with_standard=False):
-	"""ERPNext's chart list for a country, plus any this app ships for it."""
+	"""ERPNext's chart list for a country, plus any this app ships for it.
+
+	Whitelisted because it stands in for a whitelisted ERPNext method: the setup wizard
+	and the Company form call it over HTTP, and frappe refuses a replacement function
+	that is not itself whitelisted — the chart dropdown then comes back empty.
+	"""
+	install_patches()
 	charts = list(_upstream_get_charts_for_country(country, with_standard) or [])
 	if not _enabled():
 		return charts
@@ -145,8 +152,30 @@ def setup_taxes_and_charges(company_name, country):
 	from_detailed_data(company_name, data)
 	update_regional_tax_settings(country, company_name)
 
+	# Tax categories, the IVA item tax templates and the withholding categories.
+	# After the templates above, which are what create IVA Liquidado on a company
+	# whose chart does not have it. Behind a savepoint: these are conveniences, and
+	# a failure here must not stop the company from being created.
+	from isoft_angola_tax_compliance.angola_setup.defaults import setup_company
+
+	frappe.db.savepoint("angola_tax_defaults")
+	try:
+		setup_company(company_name)
+	except Exception:
+		frappe.db.rollback(save_point="angola_tax_defaults")
+		frappe.log_error(frappe.get_traceback(), "Angola tax defaults")
+
 
 # ---------- installation ----------
+
+def ensure_loaded(doc=None, method=None):
+	"""Company doc event. Does nothing itself: resolving it imports this app, which
+	installs the wrappers in the worker about to create the company's accounts and
+	taxes. Without it a worker that never touched this app would use ERPNext's
+	lookups and not find the Angola chart.
+	"""
+	install_patches()
+
 
 _TARGET_MODULES = {
 	"erpnext.accounts.doctype.account.chart_of_accounts.chart_of_accounts": (

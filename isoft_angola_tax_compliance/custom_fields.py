@@ -141,6 +141,39 @@ def get_custom_fields():
 				"depends_on": "eval:doc.atc_auto_assign",
 			},
 		],
+		# SAF-T / AGT classification of the template. These were created by hand on
+		# sites running saft_xml, which reads them; declared here under the same
+		# fieldnames so they exist -- with their data untouched -- on any site that
+		# has this app, with or without saft_xml.
+		"Item Tax Template": [
+			{
+				"fieldname": "tax_code",
+				"fieldtype": "Data",
+				"label": "Tax Code",
+				"insert_after": "taxes",
+				"description": "SAF-T TaxCode: NOR, RED, ISE or OUT.",
+			},
+			{
+				"fieldname": "tax_type",
+				"fieldtype": "Data",
+				"label": "Tax Type",
+				"insert_after": "tax_code",
+				"description": "SAF-T TaxType. Only templates of type IVA are exported.",
+			},
+			{
+				"fieldname": "description",
+				"fieldtype": "Data",
+				"label": "Description",
+				"insert_after": "tax_type",
+			},
+			{
+				"fieldname": "tax_exemption_code",
+				"fieldtype": "Data",
+				"label": "Tax Exemption Code",
+				"insert_after": "description",
+				"description": "SAF-T TaxExemptionCode (M00..M94) for a 0% template.",
+			},
+		],
 		"Customer": [
 			# Unlabelled section break, not a titled section: a Table rendered
 			# inside the second column of the basic-info block comes out at half

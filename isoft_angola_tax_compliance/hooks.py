@@ -286,6 +286,11 @@ doc_events = {
 	"Item": {
 		"before_insert": "isoft_angola_tax_compliance.auto_assign.apply_to_item",
 	},
+	# Loads the Angola chart / IVA template wrappers before the company's accounts
+	# are created (angola_setup.ensure_loaded).
+	"Company": {
+		"validate": "isoft_angola_tax_compliance.angola_setup.ensure_loaded",
+	},
 	# Angolan NIF format check. Off until enabled in Angola NIF Validation
 	# Settings, and warns rather than blocks unless configured otherwise.
 	"Customer": {
@@ -296,6 +301,13 @@ doc_events = {
 			"isoft_angola_tax_compliance.customer_name.validate",
 		],
 	},
+}
+
+# Angola chart of accounts in the setup wizard / Company form. Routing the call here
+# makes the list the same in every worker, whether or not this app was imported yet.
+# See angola_setup/__init__.py.
+override_whitelisted_methods = {
+	"erpnext.accounts.doctype.account.chart_of_accounts.chart_of_accounts.get_charts_for_country": "isoft_angola_tax_compliance.angola_setup.get_charts_for_country",
 }
 
 after_install = "isoft_angola_tax_compliance.install.after_install"

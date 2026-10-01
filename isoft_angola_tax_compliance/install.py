@@ -24,6 +24,7 @@ def after_install():
 	hide_superseded_core_fields()
 	adopt_closing_configuration_profiles()
 	seed_from_legacy_configuration()
+	seed_angola_defaults()
 
 
 def after_migrate():
@@ -188,6 +189,25 @@ def seed_from_legacy_configuration():
 		return None
 
 	return autorun()
+
+
+def seed_angola_defaults():
+	"""Tax categories, IVA item tax templates and the withholding categories.
+
+	Install only, after the legacy seeding so a company's legacy accounts win over
+	the defaults. Deliberately not run on migrate: on a site already in use, which
+	templates exist is the accountant's decision, not something an update should
+	revisit. See angola_setup/defaults.py.
+	"""
+	from isoft_angola_tax_compliance.angola_setup.defaults import setup_site
+
+	try:
+		return setup_site()
+	except Exception:
+		frappe.db.rollback()
+		frappe.log_error(frappe.get_traceback(), "Angola tax defaults")
+		print("  !! Angola tax defaults: seeding FAILED. Nothing was changed by it.")
+		return None
 
 
 def setup_custom_fields():

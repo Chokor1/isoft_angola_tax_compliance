@@ -1,0 +1,338 @@
+[
+ {
+  "title": "IVA 14%",
+  "tax_code": "NOR",
+  "tax_type": "IVA",
+  "description": "IVA NORMAL",
+  "tax_exemption_code": "",
+  "tax_rate": 14.0
+ },
+ {
+  "title": "Regime Simplificado",
+  "tax_code": "OUT",
+  "tax_type": "IVA",
+  "description": "Regime Simplificado",
+  "tax_exemption_code": "",
+  "tax_rate": 7.0
+ },
+ {
+  "title": "CESTA BASICA",
+  "tax_code": "RED",
+  "tax_type": "IVA",
+  "description": "IVA REGIME ESPECIAIS",
+  "tax_exemption_code": "",
+  "tax_rate": 5.0
+ },
+ {
+  "title": "M00",
+  "tax_code": "ISE",
+  "tax_type": "IVA",
+  "description": "IVA - Regime Simplificado",
+  "tax_exemption_code": "M00",
+  "tax_rate": 0.0
+ },
+ {
+  "title": "M02",
+  "tax_code": "ISE",
+  "tax_type": "IVA",
+  "description": "Transmissão de bens e serviços não sujeita",
+  "tax_exemption_code": "M02",
+  "tax_rate": 0.0
+ },
+ {
+  "title": "M04",
+  "tax_code": "ISE",
+  "tax_type": "IVA",
+  "description": "IVA - Regime de Exclusão",
+  "tax_exemption_code": "M04",
+  "tax_rate": 0.0
+ },
+ {
+  "title": "M10",
+  "tax_code": "ISE",
+  "tax_type": "IVA",
+  "description": "Isento nos termos da alínea a) do nº1 do artigo 12.º do CIVA",
+  "tax_exemption_code": "M10",
+  "tax_rate": 0.0
+ },
+ {
+  "title": "M11",
+  "tax_code": "ISE",
+  "tax_type": "IVA",
+  "description": "Isento nos termos da alínea b) do nº1 do artigo 12.º do CIVA",
+  "tax_exemption_code": "M11",
+  "tax_rate": 0.0
+ },
+ {
+  "title": "M12",
+  "tax_code": "ISE",
+  "tax_type": "IVA",
+  "description": "Isento nos termos da alínea c) do nº1 do artigo 12.º do CIVA",
+  "tax_exemption_code": "M12",
+  "tax_rate": 0.0
+ },
+ {
+  "title": "M13",
+  "tax_code": "ISE",
+  "tax_type": "IVA",
+  "description": "Isento nos termos da alínea d) do nº1 do artigo 12.º do CIVA",
+  "tax_exemption_code": "M13",
+  "tax_rate": 0.0
+ },
+ {
+  "title": "M14",
+  "tax_code": "ISE",
+  "tax_type": "IVA",
+  "description": "Isento nos termos da alínea e) do nº1 do artigo 12.º do CIVA",
+  "tax_exemption_code": "M14",
+  "tax_rate": 0.0
+ },
+ {
+  "title": "M15",
+  "tax_code": "ISE",
+  "tax_type": "IVA",
+  "description": "Isento nos termos da alínea f) do nº1 do artigo 12.º do CIVA",
+  "tax_exemption_code": "M15",
+  "tax_rate": 0.0
+ },
+ {
+  "title": "M16",
+  "tax_code": "ISE",
+  "tax_type": "IVA",
+  "description": "Isento nos termos da alínea g) do nº1 do artigo 12.º do CIVA",
+  "tax_exemption_code": "M16",
+  "tax_rate": 0.0
+ },
+ {
+  "title": "M17",
+  "tax_code": "ISE",
+  "tax_type": "IVA",
+  "description": "Isento nos termos da alínea h) do nº1 do artigo 12.º do CIVA",
+  "tax_exemption_code": "M17",
+  "tax_rate": 0.0
+ },
+ {
+  "title": "M18",
+  "tax_code": "ISE",
+  "tax_type": "IVA",
+  "description": "Isento nos termos da alínea i) do nº1 artigo 12.º do CIVA",
+  "tax_exemption_code": "M18",
+  "tax_rate": 0.0
+ },
+ {
+  "title": "M19",
+  "tax_code": "ISE",
+  "tax_type": "IVA",
+  "description": "Isento nos termos da alínea j) do nº1 do artigo 12.º do CIVA",
+  "tax_exemption_code": "M19",
+  "tax_rate": 0.0
+ },
+ {
+  "title": "M20",
+  "tax_code": "ISE",
+  "tax_type": "IVA",
+  "description": "Isento nos termos da alínea k) do nº1 do artigo 12.º do CIVA",
+  "tax_exemption_code": "M20",
+  "tax_rate": 0.0
+ },
+ {
+  "title": "M21",
+  "tax_code": "ISE",
+  "tax_type": "IVA",
+  "description": "Isento nos termos da alínea l) do nº1 do artigo 12.º do CIVA",
+  "tax_exemption_code": "M21",
+  "tax_rate": 0.0
+ },
+ {
+  "title": "M22",
+  "tax_code": "ISE",
+  "tax_type": "IVA",
+  "description": "Isento nos termos da alínea m) do artigo 12.º do CIVA",
+  "tax_exemption_code": "M22",
+  "tax_rate": 0.0
+ },
+ {
+  "title": "M23",
+  "tax_code": "ISE",
+  "tax_type": "IVA",
+  "description": "Isento nos termos da alínea n) do artigo 12.º do CIVA",
+  "tax_exemption_code": "M23",
+  "tax_rate": 0.0
+ },
+ {
+  "title": "M24",
+  "tax_code": "ISE",
+  "tax_type": "IVA",
+  "description": "Isento nos termos da alínea o) do artigo 12.º do CIVA",
+  "tax_exemption_code": "M24",
+  "tax_rate": 0.0
+ },
+ {
+  "title": "M30",
+  "tax_code": "ISE",
+  "tax_type": "IVA",
+  "description": "Isento nos termos da alínea a) do artigo 15.º do CIVA",
+  "tax_exemption_code": "M30",
+  "tax_rate": 0.0
+ },
+ {
+  "title": "M31",
+  "tax_code": "ISE",
+  "tax_type": "IVA",
+  "description": "Isento nos termos da alínea b) do artigo 15.º do CIVA",
+  "tax_exemption_code": "M31",
+  "tax_rate": 0.0
+ },
+ {
+  "title": "M32",
+  "tax_code": "ISE",
+  "tax_type": "IVA",
+  "description": "Isento nos termos da alínea c) do artigo 15.º do CIVA",
+  "tax_exemption_code": "M32",
+  "tax_rate": 0.0
+ },
+ {
+  "title": "M33",
+  "tax_code": "ISE",
+  "tax_type": "IVA",
+  "description": "Isento nos termos da alínea d) do artigo 15.º do CIVA",
+  "tax_exemption_code": "M33",
+  "tax_rate": 0.0
+ },
+ {
+  "title": "M34",
+  "tax_code": "ISE",
+  "tax_type": "IVA",
+  "description": "Isento nos termos da alínea e) do artigo 15.º do CIVA",
+  "tax_exemption_code": "M34",
+  "tax_rate": 0.0
+ },
+ {
+  "title": "M35",
+  "tax_code": "ISE",
+  "tax_type": "IVA",
+  "description": "Isento nos termos da alínea f) do artigo 15.º do CIVA",
+  "tax_exemption_code": "M35",
+  "tax_rate": 0.0
+ },
+ {
+  "title": "M36",
+  "tax_code": "ISE",
+  "tax_type": "IVA",
+  "description": "Isento nos termos da alínea g) do artigo 15.º do CIVA",
+  "tax_exemption_code": "M36",
+  "tax_rate": 0.0
+ },
+ {
+  "title": "M37",
+  "tax_code": "ISE",
+  "tax_type": "IVA",
+  "description": "Isento nos termos da alínea h) do artigo 15.º do CIVA",
+  "tax_exemption_code": "M37",
+  "tax_rate": 0.0
+ },
+ {
+  "title": "M38",
+  "tax_code": "ISE",
+  "tax_type": "IVA",
+  "description": "Isento nos termos da alínea i) do artigo 15.º do CIVA",
+  "tax_exemption_code": "M38",
+  "tax_rate": 0.0
+ },
+ {
+  "title": "M80",
+  "tax_code": "ISE",
+  "tax_type": "IVA",
+  "description": "Isento nos termos da alinea a) do nº1 do artigo 14.º",
+  "tax_exemption_code": "M80",
+  "tax_rate": 0.0
+ },
+ {
+  "title": "M81",
+  "tax_code": "ISE",
+  "tax_type": "IVA",
+  "description": "Isento nos termos da alinea b) do nº1 do artigo 14.º",
+  "tax_exemption_code": "M81",
+  "tax_rate": 0.0
+ },
+ {
+  "title": "M82",
+  "tax_code": "ISE",
+  "tax_type": "IVA",
+  "description": "Isento nos termos da alinea c) do nº1 do artigo 14.º",
+  "tax_exemption_code": "M82",
+  "tax_rate": 0.0
+ },
+ {
+  "title": "M83",
+  "tax_code": "ISE",
+  "tax_type": "IVA",
+  "description": "Isento nos termos da alinea d) do nº1 do artigo 14.º",
+  "tax_exemption_code": "M83",
+  "tax_rate": 0.0
+ },
+ {
+  "title": "M84",
+  "tax_code": "ISE",
+  "tax_type": "IVA",
+  "description": "Isento nos termos da alínea e) do nº1 do artigo 14.º",
+  "tax_exemption_code": "M84",
+  "tax_rate": 0.0
+ },
+ {
+  "title": "M85",
+  "tax_code": "ISE",
+  "tax_type": "IVA",
+  "description": "Isento nos termos da alinea a) do nº2 do artigo 14.º",
+  "tax_exemption_code": "M85",
+  "tax_rate": 0.0
+ },
+ {
+  "title": "M86",
+  "tax_code": "ISE",
+  "tax_type": "IVA",
+  "description": "Isento nos termos da alinea b) do nº2 do artigo 14.º",
+  "tax_exemption_code": "M86",
+  "tax_rate": 0.0
+ },
+ {
+  "title": "M90",
+  "tax_code": "ISE",
+  "tax_type": "IVA",
+  "description": "Isento nos termos da alinea a) do nº1 do artigo 16.º",
+  "tax_exemption_code": "M90",
+  "tax_rate": 0.0
+ },
+ {
+  "title": "M91",
+  "tax_code": "ISE",
+  "tax_type": "IVA",
+  "description": "Isento nos termos da alinea b) do nº1 do artigo 16.º",
+  "tax_exemption_code": "M91",
+  "tax_rate": 0.0
+ },
+ {
+  "title": "M92",
+  "tax_code": "ISE",
+  "tax_type": "IVA",
+  "description": "Isento nos termos da alinea c) do nº1 do artigo 16.º",
+  "tax_exemption_code": "M92",
+  "tax_rate": 0.0
+ },
+ {
+  "title": "M93",
+  "tax_code": "ISE",
+  "tax_type": "IVA",
+  "description": "Isento nos termos da alinea d) do nº1 do artigo 16.º",
+  "tax_exemption_code": "M93",
+  "tax_rate": 0.0
+ },
+ {
+  "title": "M94",
+  "tax_code": "ISE",
+  "tax_type": "IVA",
+  "description": "Isento nos termos da alinea e) do nº1 do artigo 16.º",
+  "tax_exemption_code": "M94",
+  "tax_rate": 0.0
+ }
+]
