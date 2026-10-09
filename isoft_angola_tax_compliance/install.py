@@ -253,6 +253,9 @@ def renumber_custom_fields(fields):
 			if name:
 				frappe.db.set_value("Custom Field", name, "idx", position, update_modified=False)
 
+		# Browsers cache the form layout by DocType.modified, which adding or
+		# moving a Custom Field does not touch; bump it or the old layout stays.
+		frappe.db.set_value("DocType", doctype, "modified", frappe.utils.now(), update_modified=False)
 		frappe.clear_cache(doctype=doctype)
 
 

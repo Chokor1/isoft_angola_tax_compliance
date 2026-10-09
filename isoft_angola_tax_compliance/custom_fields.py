@@ -247,9 +247,16 @@ def get_custom_fields():
 				"fieldname": "atc_withholding_section",
 				"fieldtype": "Section Break",
 				"label": "Withholding (Retencao / IVA Cativo)",
+				# The last field of the Totals section, so the withholding block
+				# follows the totals instead of splitting them. Anchoring on
+				# grand_total used to pull rounding / rounded total / in words in
+				# under this heading; and on Sales Invoice the old anchor,
+				# total_tax_withholding_amount, is itself a Custom Field placed
+				# after atc_engine -- a cycle Frappe resolves by dumping the whole
+				# block at the end of the form.
 				"insert_after": _anchor(
 					"Sales Invoice",
-					["total_tax_withholding_amount", "base_grand_total", "grand_total"],
+					["disable_rounded_total", "in_words", "grand_total"],
 				),
 				"collapsible": 1,
 				"collapsible_depends_on": "atc_withholdings",
@@ -338,7 +345,8 @@ def get_custom_fields():
 				"fieldname": "atc_withholding_section",
 				"fieldtype": "Section Break",
 				"label": "Withholding (Retenção / IVA Cativo)",
-				"insert_after": _anchor("Quotation", ["base_grand_total", "grand_total"]),
+				# Last field of the Totals section; see the Sales Invoice note.
+				"insert_after": _anchor("Quotation", ["in_words", "grand_total"]),
 				"collapsible": 1,
 				"collapsible_depends_on": "atc_withholdings",
 			},
