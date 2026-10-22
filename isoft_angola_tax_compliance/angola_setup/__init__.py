@@ -116,6 +116,79 @@ def get_chart(chart_template, existing_company=None):
 	return chart
 
 
+# ---------- company default accounts ----------
+
+# Company field -> PGC number of the ledger it defaults to. ERPNext's own pass can't
+# get these right on a Portuguese chart: it takes whichever Receivable / Payable / Bank
+# ledger the database returns first, and looks the income account up by the English
+# name "Sales", so it is left empty. Group structure and these choices follow ITEC LDA.
+DEFAULT_ACCOUNTS = {
+	"default_receivable_account": "31121000",  # Clientes Indiferenciados
+	"default_payable_account": "32100000",  # Fornecedores Nacionais - Diversos
+	"default_cash_account": "45101",  # Caixa - Sede
+	"default_bank_account": "431011",  # Banco Principal - Conta Corrente
+	"default_income_account": "61301",  # Vendas de Mercadorias
+	"default_expense_account": "7161",  # Custo das Mercadorias Vendidas e Consumidas
+	"round_off_account": "7581",  # Arredondamentos
+	"write_off_account": "7581",
+	"exchange_gain_loss_account": "78112",  # Diferenças de Câmbio
+	"default_payroll_payable_account": "36110000",  # Pessoal - Remunerações a Pagar
+	"default_inventory_account": "261101",  # Existências - Armazém Central
+	"stock_adjustment_account": "7841",  # Quebras e Ajustes de Existências
+	"stock_received_but_not_billed": "3281",
+	"expenses_included_in_valuation": "21228",
+	"accumulated_depreciation_account": "1819",
+	"depreciation_expense_account": "7319",
+	"capital_work_in_progress_account": "141",
+	"asset_received_but_not_billed": "3711",
+	"expenses_included_in_asset_valuation": "7583",
+}
+
+
+def flag_new_chart(doc, method=None):
+	"""Company validate: remember whether this save is the one that creates the chart.
+
+	Mirrors the condition in Company.on_update, which creates the accounts only for a
+	company that has none yet.
+	"""
+	doc.flags.angola_new_chart = bool(
+		doc.chart_of_accounts
+		and not frappe.local.flags.ignore_chart_of_accounts
+		and doc.chart_of_accounts in dict(_read_charts())
+		and not frappe.db.exists("Account", {"company": doc.name})
+	)
+
+
+def set_company_default_accounts(doc, method=None):
+	"""Company on_update: once, right after this app's chart was installed for it.
+
+	Runs after ERPNext's own on_update, so it replaces the guesses made there. A field
+	whose account the company does not have is left as ERPNext set it.
+	"""
+	if not doc.flags.angola_new_chart or not _enabled():
+		return
+	doc.flags.angola_new_chart = False
+	erpnext_cash_account = doc.default_cash_account
+
+	for fieldname, number in DEFAULT_ACCOUNTS.items():
+		if not doc.meta.has_field(fieldname):
+			continue
+		account = frappe.db.get_value(
+			"Account", {"company": doc.name, "account_number": number, "is_group": 0}
+		)
+		if account and doc.get(fieldname) != account:
+			doc.db_set(fieldname, account)
+
+	# ERPNext linked the Cash mode of payment to its own pick a moment ago.
+	if erpnext_cash_account and doc.default_cash_account != erpnext_cash_account:
+		frappe.db.set_value(
+			"Mode of Payment Account",
+			{"company": doc.name, "default_account": erpnext_cash_account},
+			"default_account",
+			doc.default_cash_account,
+		)
+
+
 # ---------- country tax templates ----------
 
 def _app_tax_data():

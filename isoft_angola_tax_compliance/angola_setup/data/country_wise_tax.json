@@ -8,8 +8,8 @@
       "taxes": [
        {
         "account_head": {
-         "account_name": "IVA Dedutível - Outros Bens e Serviços",
-         "account_number": "34523",
+         "account_name": "IVA Dedutível - Outros Bens e Serviços - Mercado Nacional",
+         "account_number": "345231",
          "tax_rate": 14.0
         }
        }
@@ -23,8 +23,8 @@
       "taxes": [
        {
         "account_head": {
-         "account_name": "IVA Liquidado",
-         "account_number": "3453",
+         "account_name": "IVA Liquidado - Mercado Nacional",
+         "account_number": "34531",
          "tax_rate": 14.0
         }
        }

@@ -287,9 +287,14 @@ doc_events = {
 		"before_insert": "isoft_angola_tax_compliance.auto_assign.apply_to_item",
 	},
 	# Loads the Angola chart / IVA template wrappers before the company's accounts
-	# are created (angola_setup.ensure_loaded).
+	# are created (angola_setup.ensure_loaded), then points the company's default
+	# accounts at that chart's own ledgers.
 	"Company": {
-		"validate": "isoft_angola_tax_compliance.angola_setup.ensure_loaded",
+		"validate": [
+			"isoft_angola_tax_compliance.angola_setup.ensure_loaded",
+			"isoft_angola_tax_compliance.angola_setup.flag_new_chart",
+		],
+		"on_update": "isoft_angola_tax_compliance.angola_setup.set_company_default_accounts",
 	},
 	# Angolan NIF format check. Off until enabled in Angola NIF Validation
 	# Settings, and warns rather than blocks unless configured otherwise.
