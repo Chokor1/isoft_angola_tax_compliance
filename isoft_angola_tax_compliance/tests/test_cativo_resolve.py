@@ -8,12 +8,14 @@
 import unittest
 
 from isoft_angola_tax_compliance.cativo_audit.resolve import (
+	build_rows,
 	candidate_patterns,
 	is_vat_closing,
 	match_reversal,
 	named_receipts,
 	note_tokens,
 	pick_invoice,
+	unassigned,
 )
 
 
@@ -98,6 +100,83 @@ class TestResolve(unittest.TestCase):
 		self.assertFalse(
 			is_vat_closing(False, ["45102 - Caixa"], closing, "Correcção ao lançamento da FR ALV2025/1229", kw)
 		)
+
+
+def mv(source, voucher, date, amount, invoice=None, link=""):
+	types = {"engine": "Sales Invoice", "legacy_je": "Journal Entry", "manual_je": "Journal Entry", "manual_pe": "Payment Entry"}
+	return dict(
+		source=source, voucher_type=types[source], voucher=voucher, posting_date=date, account="34543 - Cativo",
+		amount=amount, invoice=invoice, link=link, customer="C", note="", erp_refs=[],
+	)
+
+
+def inv(name, date, iva, docstatus=1):
+	return dict(
+		name=name, posting_date=date, customer="C", customer_name="Customer C", tax_id="5000000000",
+		docstatus=docstatus, is_return=0, net_total=iva * 7, grand_total=iva * 8, iva=iva, category="IVA Cativo 100% - Estado",
+	)
+
+
+class TestRows(unittest.TestCase):
+	def test_mixed_sources_and_other_rate(self):
+		rows = build_rows(
+			[mv("engine", "FT 1", "2025-03-01", 100, "FT 1"), mv("manual_pe", "REC 1", "2025-04-01", 50, "FT 1")],
+			{"FT 1": inv("FT 1", "2025-03-01", 100)}, "2025-01-01", "2025-12-31",
+		)
+		r = rows[0]
+		self.assertEqual((r["engine"], r["manual_pe"], r["cativo"]), (100, 50, 150))
+		self.assertEqual(r["creation"], "System + Manual")
+		self.assertEqual(r["rate"], "Other")
+		self.assertIn("System and manual cativo on the same invoice", r["alerts"])
+		self.assertIn("Cativo = 150.0% of IVA", r["alerts"])
+		self.assertEqual([d["tag"] for d in r["documents"]], ["invoice", "receipt"])
+
+	def test_rates(self):
+		rows = build_rows(
+			[mv("legacy_je", "RE 1", "2025-01-02", 50, "FT A"), mv("legacy_je", "RE 2", "2025-01-02", 100.4, "FT B")],
+			{"FT A": inv("FT A", "2025-01-02", 100), "FT B": inv("FT B", "2025-01-02", 100)}, None, None,
+		)
+		self.assertEqual([r["rate"] for r in rows], ["50%", "100%"])
+		self.assertEqual(rows[0]["alerts"], [])
+
+	def test_reversed_manual(self):
+		r = build_rows(
+			[mv("manual_pe", "REC 1", "2025-04-24", 129124.8, "FT 535"), mv("manual_je", "CBL 1", "2026-01-28", -129124.8, "FT 535")],
+			{"FT 535": inv("FT 535", "2025-04-20", 129124.8)}, "2025-01-01", "2025-12-31",
+		)[0]
+		self.assertEqual((r["cativo"], r["creation"]), (0, "Reversed"))
+		self.assertIn("Manual cativo reversed (net zero)", r["alerts"])
+
+	def test_cancelled_and_no_iva(self):
+		r = build_rows([mv("legacy_je", "RE 9", "2025-06-01", 10, "FT 9")], {"FT 9": inv("FT 9", "2025-06-01", 0, docstatus=2)}, None, None)[0]
+		self.assertEqual(r["status"], "Cancelled")
+		self.assertIsNone(r["pct"])
+		self.assertEqual(r["rate"], "")
+		self.assertIn("Cancelled invoice with active cativo", r["alerts"])
+		self.assertIn("Invoice without IVA", r["alerts"])
+
+	def test_period_uses_invoice_date(self):
+		moves = [mv("manual_je", "CBL 1", "2026-05-31", 24444, "FT 2025/1924")]
+		invs = {"FT 2025/1924": inv("FT 2025/1924", "2025-12-15", 24444)}
+		self.assertEqual(len(build_rows(moves, invs, "2025-01-01", "2025-12-31")), 1)
+		self.assertEqual(build_rows(moves, invs, "2026-01-01", "2026-12-31"), [])
+		self.assertEqual(unassigned(moves, "2026-01-01", "2026-12-31")["count"], 0)
+
+	def test_erp_link_differs_alert(self):
+		r = build_rows(
+			[mv("manual_je", "CBL 2", "2026-05-31", 107100, "FT 41", link="From the note (ERP link differs: FT 2019)")],
+			{"FT 41": inv("FT 41", "2026-02-06", 107100)}, None, None,
+		)[0]
+		self.assertIn("ERP link differs from the note", r["alerts"])
+
+	def test_unassigned_by_own_date(self):
+		moves = [
+			mv("manual_pe", "RG 19", "2025-02-15", 7648136.16, None, link="Not allocated"),
+			mv("manual_je", "RE 194", "2026-07-31", 1842105.26, None, link="Not identified"),
+		]
+		u = unassigned(moves, "2025-01-01", "2025-12-31")
+		self.assertEqual((u["count"], u["amount"]), (1, 7648136.16))
+		self.assertEqual(u["entries"][0]["reason"], "Not allocated")
 
 
 if __name__ == "__main__":

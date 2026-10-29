@@ -129,3 +129,120 @@ def is_vat_closing(
 		return True
 	text = normalise(note)
 	return any(normalise(k).strip() and normalise(k).strip() in text for k in keywords)
+
+
+SOURCES = ("engine", "legacy_je", "manual_je", "manual_pe")
+SYSTEM = ("engine", "legacy_je")
+TAGS = {"engine": "invoice", "legacy_je": "automatic JE", "manual_je": "manual JE", "manual_pe": "receipt"}
+
+
+def _in_period(date: Optional[str], from_date: Optional[str], to_date: Optional[str]) -> bool:
+	date = (date or "")[:10]
+	return (not from_date or date >= str(from_date)[:10]) and (not to_date or date <= str(to_date)[:10])
+
+
+def _rate(pct: Optional[float]) -> str:
+	if pct is None:
+		return ""
+	if abs(pct - 1) <= 0.01:
+		return "100%"
+	if abs(pct - 0.5) <= 0.01:
+		return "50%"
+	return "Other"
+
+
+def build_rows(moves: List[dict], invoices: dict, from_date: Optional[str], to_date: Optional[str]) -> List[dict]:
+	"""One row per invoice dated in the period, with every cativo movement it has.
+
+	An invoice in the period brings all its cativo, whatever the movements' own dates.
+	"""
+	by_invoice = {}
+	for m in moves:
+		if m.get("invoice"):
+			by_invoice.setdefault(m["invoice"], []).append(m)
+
+	rows = []
+	for name, ms in by_invoice.items():
+		invoice = invoices.get(name)
+		if not invoice or not _in_period(invoice["posting_date"], from_date, to_date):
+			continue
+
+		sums = {s: round(sum(m["amount"] for m in ms if m["source"] == s), 2) for s in SOURCES}
+		system = sum(sums[s] for s in SYSTEM)
+		manual = sums["manual_je"] + sums["manual_pe"]
+		cativo = round(system + manual, 2)
+		iva = round(invoice.get("iva") or 0, 2)
+		pct = cativo / iva if iva else None
+		has_system, has_manual = abs(system) > ZERO, abs(manual) > ZERO
+		manual_seen = any(m["source"] in ("manual_je", "manual_pe") for m in ms)
+
+		if has_system and has_manual:
+			creation = "System + Manual"
+		elif has_system:
+			creation = "System"
+		elif has_manual:
+			creation = "Manual"
+		else:
+			creation = "Reversed"
+
+		alerts = []
+		if has_system and has_manual:
+			alerts.append("System and manual cativo on the same invoice")
+		if manual_seen and not has_system and not has_manual:
+			alerts.append("Manual cativo reversed (net zero)")
+		if int(invoice.get("docstatus") or 0) == 2:
+			alerts.append("Cancelled invoice with active cativo")
+		if pct is not None and abs(cativo) > ZERO and _rate(pct) == "Other":
+			alerts.append("Cativo = %.1f%% of IVA" % (pct * 100))
+		if not iva and abs(cativo) > ZERO:
+			alerts.append("Invoice without IVA")
+		if any("ERP link differs" in (m.get("link") or "") for m in ms):
+			alerts.append("ERP link differs from the note")
+
+		documents, seen = [], set()
+		for m in sorted(ms, key=lambda m: (m.get("posting_date") or "", m["voucher"])):
+			if (m["voucher_type"], m["voucher"]) in seen:
+				continue
+			seen.add((m["voucher_type"], m["voucher"]))
+			documents.append({"voucher": m["voucher"], "doctype": m["voucher_type"], "tag": TAGS[m["source"]]})
+
+		rows.append(
+			{
+				"invoice": name,
+				"date": invoice["posting_date"],
+				"customer": invoice.get("customer_name") or invoice.get("customer"),
+				"nif": invoice.get("tax_id") or "",
+				"status": "Cancelled" if int(invoice.get("docstatus") or 0) == 2 else "Submitted",
+				"iva": iva,
+				"engine": sums["engine"],
+				"legacy_je": sums["legacy_je"],
+				"manual_je": sums["manual_je"],
+				"manual_pe": sums["manual_pe"],
+				"cativo": cativo,
+				"pct": pct,
+				"rate": _rate(pct),
+				"creation": creation,
+				"documents": documents,
+				"category": invoice.get("category") or "No IVA category",
+				"alerts": alerts,
+			}
+		)
+	return sorted(rows, key=lambda r: (r["date"], r["invoice"]))
+
+
+def unassigned(moves: List[dict], from_date: Optional[str], to_date: Optional[str]) -> dict:
+	"""Cativo no invoice could be found for, posted in the period."""
+	entries = [
+		{
+			"voucher": m["voucher"],
+			"voucher_type": m["voucher_type"],
+			"posting_date": m["posting_date"],
+			"customer": m.get("customer") or "",
+			"amount": round(m["amount"], 2),
+			"reason": m.get("link") or "",
+		}
+		for m in moves
+		if not m.get("invoice") and _in_period(m.get("posting_date"), from_date, to_date)
+	]
+	entries.sort(key=lambda e: (e["posting_date"], e["voucher"]))
+	return {"amount": round(sum(e["amount"] for e in entries), 2), "count": len(entries), "entries": entries}
