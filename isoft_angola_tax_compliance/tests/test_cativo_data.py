@@ -98,5 +98,45 @@ class TestData(unittest.TestCase):
 		self.assertIn("ERP link differs", m["link"])
 
 
+class TestExport(unittest.TestCase):
+	def test_export_layout(self):
+		import json
+		from io import BytesIO
+
+		from openpyxl import load_workbook
+
+		from isoft_angola_tax_compliance.cativo_audit import api
+
+		sample = {
+			"company": "ITEC LDA", "from_date": "2025-01-01", "to_date": "2025-12-31",
+			"columns": [
+				{"key": "invoice", "label": "Invoice", "kind": "text"},
+				{"key": "customer", "label": "Customer", "kind": "text"},
+				{"key": "cativo", "label": "Cativo total", "kind": "money"},
+				{"key": "pct", "label": "% of IVA", "kind": "pct"},
+			],
+			"rows": [
+				{"invoice": "FT 2025/1", "customer": "=SUM(1)", "cativo": 100.5, "pct": 1.0},
+				{"invoice": "FT 2025/2", "customer": "SINSE", "cativo": 50, "pct": 0.5},
+			],
+			"totals": {"invoice": "Total · 2 invoices", "cativo": 150.5, "pct": 1.0},
+			"unassigned": {"amount": 7648136.16, "count": 1},
+		}
+		response = {}
+		with mock.patch.object(api.frappe, "only_for"), mock.patch.object(api.frappe, "response", response):
+			api.export_cativo_audit(json.dumps(sample))
+
+		self.assertEqual(response["type"], "binary")
+		self.assertEqual(response["filename"], "Cativo_Audit_ITEC LDA_2025-01-01_2025-12-31.xlsx")
+		ws = load_workbook(BytesIO(response["filecontent"])).active
+		self.assertEqual(ws.title, "Invoices with cativo")
+		self.assertEqual([c.value for c in ws[1]], ["Invoice", "Customer", "Cativo total", "% of IVA"])
+		self.assertEqual(ws.cell(row=2, column=2).value, "=SUM(1)")
+		self.assertEqual(ws.cell(row=2, column=2).data_type, "s")
+		self.assertEqual(ws.cell(row=4, column=1).value, "Total · 2 invoices")
+		self.assertEqual(ws.cell(row=ws.max_row, column=1).value, "Cativo with no invoice identified")
+		self.assertEqual(ws.cell(row=ws.max_row, column=3).value, 7648136.16)
+
+
 if __name__ == "__main__":
 	unittest.main()
