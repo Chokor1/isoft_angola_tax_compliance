@@ -1,0 +1,14 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "overused-font",
+        "value": "inter",
+        "createdAt": "2026-10-29T11:06:53.729Z",
+        "reason": "Claude: Inter is the font of the Invenza shell (apps/saft_xml/.../saft_center.css), the user's chosen UI reference for Isoft apps"
+      }
+    ]
+  }
+}
