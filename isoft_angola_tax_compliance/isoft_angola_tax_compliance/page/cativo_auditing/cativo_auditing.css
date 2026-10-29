@@ -72,9 +72,10 @@
 .ca-check { display: inline-flex; align-items: center; gap: 6px; margin: 0 0 7px; font-size: 13px; color: var(--ca-text-2); }
 
 .ca-notice {
-	border: 1px solid var(--ca-border); border-left: 3px solid var(--ca-amber); background: var(--ca-card);
+	border: 1px solid var(--ca-border); background: var(--ca-card);
 	border-radius: 8px; padding: 8px 12px; font-size: 13px; color: var(--ca-text-2);
 }
+.ca-notice::before { content: "\f071"; font-family: FontAwesome; color: var(--ca-amber); margin-right: 8px; }
 .ca-link { color: var(--ca-accent); }
 
 .ca-card { background: var(--ca-card); border: 1px solid var(--ca-border); border-radius: 10px; overflow: hidden; }
