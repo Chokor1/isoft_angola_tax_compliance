@@ -46,6 +46,8 @@
 
 	frappe.pages["cativo-auditing"].on_page_load = function (wrapper) {
 		const page = frappe.ui.make_app_page({ parent: wrapper, title: __("Cativo Auditing"), single_column: true });
+		// The page draws its own header (title + actions); drop the desk's title bar on this page only.
+		$(wrapper).find(".page-head").addClass("hide");
 		wrapper.cativo_auditing = new CativoAuditing(page);
 	};
 
