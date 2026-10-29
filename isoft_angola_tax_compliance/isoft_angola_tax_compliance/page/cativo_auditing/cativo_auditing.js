@@ -44,6 +44,21 @@
 	const money = (v) => (v == null || v === "" ? "" : money_fmt.format(v));
 	const pct = (v) => (v == null || v === "" ? "" : money_fmt.format(v * 100).replace(/[.,]\d\d$/, (m) => m.slice(0, 2)) + "%");
 
+	// Rows grouped by invoice month, in the order they are given; months follow the
+	// date sort direction (newest first when the table is sorted by date descending).
+	function group_by_month(rows, totals, newest_first) {
+		const groups = new Map();
+		rows.forEach((r) => {
+			const key = String(r.date || "").slice(0, 7);
+			if (!groups.has(key)) groups.set(key, []);
+			groups.get(key).push(r);
+		});
+		const keys = [...groups.keys()].sort();
+		if (newest_first) keys.reverse();
+		return keys.map((key) => ({ key, rows: groups.get(key), totals: totals(groups.get(key)) }));
+	}
+	const month_label = (key) => (key ? moment(key + "-01").format("MMMM YYYY") : __("No date"));
+
 	frappe.pages["cativo-auditing"].on_page_load = function (wrapper) {
 		const page = frappe.ui.make_app_page({ parent: wrapper, title: __("Cativo Auditing"), single_column: true });
 		// The page draws its own header (title + actions); drop the desk's title bar on this page only.
@@ -55,7 +70,7 @@
 		constructor(page) {
 			this.page = page;
 			this.data = { rows: [], unassigned: { amount: 0, count: 0, entries: [] }, warnings: [] };
-			this.filters = { q: "", creation: "", rate: "", alerts: false };
+			this.filters = { q: "", creation: "", rate: "", alerts: false, group: false };
 			this.sort = { key: "date", dir: 1 };
 			this.make();
 			this.load_companies();
@@ -93,6 +108,7 @@
 							["", __("All")], ["100%", "100%"], ["50%", "50%"], ["Other", __("Other")],
 						])}</label>
 						<label class="ca-check"><input type="checkbox" data-role="alerts"> ${__("Only with alerts")}</label>
+						<label class="ca-check"><input type="checkbox" data-role="group"> ${__("Group by month")}</label>
 					</div>
 
 					<div class="ca-notice" data-role="warnings" hidden></div>
@@ -121,10 +137,11 @@
 				this.filters.q = e.currentTarget.value;
 				this.paint();
 			});
-			$r.on("change", '[data-role="creation"], [data-role="rate"], [data-role="alerts"]', () => {
+			$r.on("change", '[data-role="creation"], [data-role="rate"], [data-role="alerts"], [data-role="group"]', () => {
 				this.filters.creation = $r.find('[data-role="creation"]').val();
 				this.filters.rate = $r.find('[data-role="rate"]').val();
 				this.filters.alerts = $r.find('[data-role="alerts"]').is(":checked");
+				this.filters.group = $r.find('[data-role="group"]').is(":checked");
 				this.paint();
 			});
 			$r.on("click", "th[data-sort]", (e) => {
@@ -272,26 +289,22 @@
 			}
 
 			const rows = this.shown();
+			const row_html = (r) => `<tr class="${r.status === "Cancelled" ? "ca-cancelled" : ""}">${COLUMNS.map((c) => this.cell(c, r)).join("")}</tr>`;
+			const body = this.filters.group
+				? this.months(rows)
+						.map((g) => this.subtotal_html("ca-month", __("{0} · {1} invoices", [month_label(g.key), g.totals.count]), g.totals) + g.rows.map(row_html).join(""))
+						.join("")
+				: rows.map(row_html).join("");
 			$tbody.html(
 				rows.length
-					? rows
-							.map((r) => `<tr class="${r.status === "Cancelled" ? "ca-cancelled" : ""}">${COLUMNS.map((c) => this.cell(c, r)).join("")}</tr>`)
-							.join("")
+					? body
 					: `<tr><td colspan="${cols}" class="ca-empty">${
 							(this.data.rows || []).length ? __("No invoice matches these filters.") : __("No invoices with cativo in this period.")
 					  }</td></tr>`
 			);
 
 			const t = this.totals(rows);
-			$tfoot.html(
-				`<tr>${COLUMNS.map((c, i) => {
-					if (i === 0) return `<td colspan="5">${__("Total · {0} invoices shown", [t.count])}</td>`;
-					if (i < 5) return "";
-					if (c.kind === "money") return `<td class="ca-num">${money(t[c.key])}</td>`;
-					if (c.kind === "pct") return `<td class="ca-num">${pct(t.pct)}</td>`;
-					return "<td></td>";
-				}).join("")}</tr>`
-			);
+			$tfoot.html(this.subtotal_html("", __("Total · {0} invoices shown", [t.count]), t));
 
 			const un = this.data.unassigned || { amount: 0, count: 0, entries: [] };
 			$un.html(`
@@ -319,10 +332,29 @@
 				</details>`);
 		}
 
+		months(rows) {
+			return group_by_month(rows, (rs) => this.totals(rs), this.sort.key === "date" && this.sort.dir === -1);
+		}
+
+		subtotal_html(cls, label, t) {
+			return `<tr class="${cls}">${COLUMNS.map((c, i) => {
+				if (i === 0) return `<td colspan="5">${esc(label)}</td>`;
+				if (i < 5) return "";
+				if (c.kind === "money") return `<td class="ca-num">${money(t[c.key])}</td>`;
+				if (c.kind === "pct") return `<td class="ca-num">${pct(t.pct)}</td>`;
+				return "<td></td>";
+			}).join("")}</tr>`;
+		}
+
 		export() {
 			if (this.state !== "ready") return;
 			const $r = this.$root;
-			const rows = this.shown().map((r) => {
+			const as_row = (label, t) => {
+				const out = { invoice: label, pct: t.pct };
+				MONEY.forEach((k) => (out[k] = t[k]));
+				return out;
+			};
+			const flat = (r) => {
 				const out = {};
 				COLUMNS.forEach((c) => {
 					const v = r[c.key];
@@ -333,8 +365,12 @@
 						: v;
 				});
 				return out;
-			});
-			const t = this.totals(this.shown());
+			};
+			const shown = this.shown();
+			const rows = this.filters.group
+				? [].concat(...this.months(shown).map((g) => [as_row(__("{0} · {1} invoices", [month_label(g.key), g.totals.count]), g.totals), ...g.rows.map(flat)]))
+				: shown.map(flat);
+			const t = this.totals(shown);
 			const totals = { invoice: __("Total · {0} invoices shown", [t.count]), pct: t.pct };
 			MONEY.forEach((k) => (totals[k] = t[k]));
 			open_url_post(`/api/method/${API}.export_cativo_audit`, {

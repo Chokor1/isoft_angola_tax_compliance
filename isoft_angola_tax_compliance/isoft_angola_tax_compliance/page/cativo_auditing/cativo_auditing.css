@@ -97,6 +97,7 @@
 	border-top: 1px solid var(--ca-border-2); border-bottom: 0; white-space: nowrap;
 }
 .ca-table tbody tr:hover td { background: var(--ca-soft); }
+.ca-table tbody tr.ca-month td { background: var(--ca-bg-2); font-weight: 600; color: var(--ca-text-2); white-space: nowrap; border-top: 1px solid var(--ca-border-2); }
 .ca-table a { color: var(--ca-accent); }
 
 .ca-num { text-align: right !important; white-space: nowrap; }
