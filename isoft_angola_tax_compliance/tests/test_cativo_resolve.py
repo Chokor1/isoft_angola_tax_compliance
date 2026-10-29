@@ -10,6 +10,7 @@ import unittest
 from isoft_angola_tax_compliance.cativo_audit.resolve import (
 	build_rows,
 	candidate_patterns,
+	drop_unknown_invoices,
 	is_vat_closing,
 	match_reversal,
 	named_receipts,
@@ -177,6 +178,31 @@ class TestRows(unittest.TestCase):
 		u = unassigned(moves, "2025-01-01", "2025-12-31")
 		self.assertEqual((u["count"], u["amount"]), (1, 7648136.16))
 		self.assertEqual(u["entries"][0]["reason"], "Not allocated")
+
+
+class TestReviewFixes(unittest.TestCase):
+	def test_system_reversed_by_manual_is_reversed(self):
+		r = build_rows(
+			[mv("legacy_je", "RE 1", "2025-08-08", 100, "FT 1"), mv("manual_je", "CBL 1", "2025-12-23", -100, "FT 1")],
+			{"FT 1": inv("FT 1", "2025-08-08", 100)}, None, None,
+		)[0]
+		self.assertEqual((r["cativo"], r["creation"]), (0, "Reversed"))
+		self.assertEqual(r["alerts"], ["Manual cativo reversed (net zero)"])
+
+	def test_system_only_net_zero_is_system(self):
+		r = build_rows(
+			[mv("legacy_je", "RE 1", "2025-08-08", 100, "FT 1"), mv("legacy_je", "RE 2", "2025-08-09", -100, "FT 1")],
+			{"FT 1": inv("FT 1", "2025-08-08", 100)}, None, None,
+		)[0]
+		self.assertEqual(r["creation"], "System")
+		self.assertNotIn("Manual cativo reversed (net zero)", r["alerts"])
+
+	def test_unknown_invoice_goes_to_unassigned(self):
+		moves = [mv("legacy_je", "RE 7", "2025-05-01", 250, "FT 2025/758 extra words", link="From the note")]
+		drop_unknown_invoices(moves, {})
+		self.assertIsNone(moves[0]["invoice"])
+		self.assertEqual(moves[0]["link"], "Invoice FT 2025/758 extra words not found")
+		self.assertEqual(unassigned(moves, "2025-01-01", "2025-12-31")["amount"], 250)
 
 
 if __name__ == "__main__":

@@ -175,21 +175,24 @@ def build_rows(moves: List[dict], invoices: dict, from_date: Optional[str], to_d
 		pct = cativo / iva if iva else None
 		has_system, has_manual = abs(system) > ZERO, abs(manual) > ZERO
 		manual_seen = any(m["source"] in ("manual_je", "manual_pe") for m in ms)
+		# A manual entry that brings the invoice back to zero undoes its cativo, whether the
+		# cativo it undoes was manual or booked by the system.
+		reversed_ = manual_seen and abs(cativo) <= ZERO
 
-		if has_system and has_manual:
+		if reversed_:
+			creation = "Reversed"
+		elif has_system and has_manual:
 			creation = "System + Manual"
-		elif has_system:
-			creation = "System"
 		elif has_manual:
 			creation = "Manual"
 		else:
-			creation = "Reversed"
+			creation = "System"
 
 		alerts = []
-		if has_system and has_manual:
-			alerts.append("System and manual cativo on the same invoice")
-		if manual_seen and not has_system and not has_manual:
+		if reversed_:
 			alerts.append("Manual cativo reversed (net zero)")
+		elif has_system and has_manual:
+			alerts.append("System and manual cativo on the same invoice")
 		if int(invoice.get("docstatus") or 0) == 2:
 			alerts.append("Cancelled invoice with active cativo")
 		if pct is not None and abs(cativo) > ZERO and _rate(pct) == "Other":
@@ -228,6 +231,17 @@ def build_rows(moves: List[dict], invoices: dict, from_date: Optional[str], to_d
 			}
 		)
 	return sorted(rows, key=lambda r: (r["date"], r["invoice"]))
+
+
+def drop_unknown_invoices(moves: List[dict], invoices: dict) -> None:
+	"""A movement pointing at an invoice that does not exist goes to the unassigned line.
+
+	Without this it would be in no row and in no line: cativo lost from the page.
+	"""
+	for m in moves:
+		if m.get("invoice") and m["invoice"] not in invoices:
+			m["link"] = "Invoice %s not found" % m["invoice"]
+			m["invoice"] = None
 
 
 def unassigned(moves: List[dict], from_date: Optional[str], to_date: Optional[str]) -> dict:

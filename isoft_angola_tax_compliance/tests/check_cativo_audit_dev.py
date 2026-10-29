@@ -29,10 +29,16 @@ def main():
 			elapsed = time.time() - started
 
 			rows, unassigned = result["rows"], result["unassigned"]
+			# Independent of the rows: every movement, placed by the period rule.
 			moves = data.load_movements(company, result["accounts"])
-			invoices = {r["invoice"] for r in rows}
-			expected = sum(m["amount"] for m in moves if m["invoice"] in invoices)
-			expected += sum(m["amount"] for m in moves if not m["invoice"] and resolve._in_period(m["posting_date"], FROM, TO))
+			invoices = data.load_invoices(sorted({m["invoice"] for m in moves if m["invoice"]}), result["accounts"])
+			resolve.drop_unknown_invoices(moves, invoices)
+			expected = sum(
+				m["amount"]
+				for m in moves
+				if (m["invoice"] and resolve._in_period(invoices[m["invoice"]]["posting_date"], FROM, TO))
+				or (not m["invoice"] and resolve._in_period(m["posting_date"], FROM, TO))
+			)
 			got = sum(r["cativo"] for r in rows) + unassigned["amount"]
 
 			print(

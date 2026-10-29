@@ -102,7 +102,17 @@ def derive_accounts(company: str) -> Dict:
 		iva.append(vat.output_vat_account)
 	iva += _leaf_accounts(company, prefixes=("3453", "34541"))
 
-	closing = [vat.get(f) for f in ("deductible_vat_account", "output_vat_account") if vat and vat.get(f)]
+	closing = [
+		vat.get(f)
+		for f in ("deductible_vat_account", "output_vat_account", "vat_assessment_account", "vat_payable_account", "vat_recoverable_account")
+		if vat and vat.get(f)
+	]
+	if frappe.db.exists("DocType", "VAT Assessment Settings"):
+		closing += [
+			row.account
+			for row in frappe.get_single("VAT Assessment Settings").get("adjustment_accounts") or []
+			if row.company == company and row.account
+		]
 	closing += _leaf_accounts(company, prefixes=("3452", "3453"))
 
 	settings_keywords = frappe.db.get_single_value("Cativo Audit Settings", "vat_closing_keywords") if frappe.db.exists(
@@ -175,6 +185,19 @@ def load_movements(company: str, accounts: Dict) -> List[Dict]:
 		if abs(float(r["amount"] or 0)) >= resolve.ZERO
 	]
 
+	# The monthly VAT Assessment moves withheld VAT out of the cativo account; it is a
+	# closing, never an invoice's cativo.
+	assessment_jes = {
+		r["journal_entry"]
+		for r in _sql(
+			"""select v.journal_entry from `tabVAT Assessment Journal Entry` v
+			join `tabVAT Assessment` a on a.name = v.parent
+			where a.company = %(company)s and ifnull(v.journal_entry, '') != ''""",
+			{"company": company},
+		)
+	}
+	gl = [r for r in gl if not (r["voucher_type"] == "Journal Entry" and r["voucher_no"] in assessment_jes)]
+
 	je_names = sorted({r["voucher_no"] for r in gl if r["voucher_type"] == "Journal Entry"})
 	pe_names = sorted({r["voucher_no"] for r in gl if r["voucher_type"] == "Payment Entry"})
 	je_head, je_rows = {}, {}
@@ -193,7 +216,11 @@ def load_movements(company: str, accounts: Dict) -> List[Dict]:
 
 	pe_head, pe_refs = {}, {}
 	for chunk in _chunks(pe_names):
-		for r in _sql("""select name, party, remarks from `tabPayment Entry` where name in %(names)s""", {"names": tuple(chunk)}):
+		for r in _sql(
+			"""select name, party, remarks, paid_from_account_currency, paid_to_account_currency, paid_amount, received_amount
+			from `tabPayment Entry` where name in %(names)s""",
+			{"names": tuple(chunk)},
+		):
 			pe_head[r["name"]] = r
 		for r in _sql(
 			"""select parent, reference_doctype, reference_name, allocated_amount
@@ -232,11 +259,16 @@ def load_movements(company: str, accounts: Dict) -> List[Dict]:
 		else:
 			head = pe_head.get(voucher) or {}
 			base = dict(customer=head.get("party"), note=(head.get("remarks") or "").split("\n")[0])
+			# Allocations are in the party account's currency; the cativo amount is in the
+			# cativo account's. Convert when they differ (received / paid is the receipt's rate).
+			factor = 1.0
+			if head.get("paid_from_account_currency") != head.get("paid_to_account_currency") and float(head.get("paid_amount") or 0):
+				factor = float(head.get("received_amount") or 0) / float(head["paid_amount"])
 			left = amount
 			for ref in pe_refs.get(voucher, []):
 				if ref["reference_doctype"] != "Sales Invoice" or left <= resolve.ZERO:
 					continue
-				take = min(float(ref["allocated_amount"] or 0), left)
+				take = min(round(float(ref["allocated_amount"] or 0) * factor, 2), left)
 				if take <= 0:
 					continue
 				moves.append(_move("manual_pe", "Payment Entry", voucher, g["posting_date"], g["account"], take,

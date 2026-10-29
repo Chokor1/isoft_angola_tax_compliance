@@ -27,6 +27,7 @@ def get_cativo_audit(company, from_date=None, to_date=None):
 	moves = data.load_movements(company, accounts)
 	names = sorted({m["invoice"] for m in moves if m["invoice"]})
 	invoices = data.load_invoices(names, accounts)
+	resolve.drop_unknown_invoices(moves, invoices)
 	return {
 		"rows": resolve.build_rows(moves, invoices, from_date, to_date),
 		"unassigned": resolve.unassigned(moves, from_date, to_date),
