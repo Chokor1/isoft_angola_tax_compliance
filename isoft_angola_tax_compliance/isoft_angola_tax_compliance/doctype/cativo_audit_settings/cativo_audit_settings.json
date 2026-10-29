@@ -1,0 +1,59 @@
+{
+ "actions": [],
+ "creation": "2026-10-29 11:30:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "accounts",
+  "vat_closing_keywords"
+ ],
+ "fields": [
+  {
+   "description": "Accounts the Cativo Auditing page reads, per company. A company with no rows for a purpose uses what its setup implies (IVA Cativo withholding categories, VAT Assessment Settings, accounts 3452/3453/34541). Use Fill from Company Setup to see and keep those.",
+   "fieldname": "accounts",
+   "fieldtype": "Table",
+   "label": "Accounts",
+   "options": "Cativo Audit Account"
+  },
+  {
+   "default": "apuramento, abertura",
+   "description": "Comma-separated. A journal entry on a cativo account with no customer whose note contains one of these words is a VAT closing and is left out (accents and case are ignored).",
+   "fieldname": "vat_closing_keywords",
+   "fieldtype": "Small Text",
+   "label": "VAT Closing Keywords"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "issingle": 1,
+ "links": [],
+ "modified": "2026-10-29 11:30:00.000000",
+ "modified_by": "Administrator",
+ "module": "Isoft Angola Tax Compliance",
+ "name": "Cativo Audit Settings",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "role": "Accounts Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC"
+}

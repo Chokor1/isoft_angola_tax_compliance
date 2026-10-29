@@ -1,0 +1,50 @@
+{
+ "actions": [],
+ "creation": "2026-10-29 11:30:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "company",
+  "account",
+  "purpose"
+ ],
+ "fields": [
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Company",
+   "options": "Company",
+   "reqd": 1
+  },
+  {
+   "fieldname": "account",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Account",
+   "options": "Account",
+   "reqd": 1
+  },
+  {
+   "description": "Cativo: movements on this account are IVA cativo. IVA charged: invoice tax lines on this account are the invoice's IVA. VAT closing: a journal entry with no customer touching this account is a monthly VAT closing and is left out.",
+   "fieldname": "purpose",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Purpose",
+   "options": "Cativo\nIVA charged\nVAT closing",
+   "reqd": 1
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2026-10-29 11:30:00.000000",
+ "modified_by": "Administrator",
+ "module": "Isoft Angola Tax Compliance",
+ "name": "Cativo Audit Account",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC"
+}
