@@ -14,6 +14,7 @@ doctype here so Period Closing Voucher stays untouched.
 
 import frappe
 from frappe import _
+from frappe.model.naming import make_autoname
 from frappe.utils import flt, getdate
 
 from erpnext.accounts.doctype.accounting_dimension.accounting_dimension import (
@@ -30,6 +31,16 @@ BACKGROUND_THRESHOLD = 5000
 
 
 class AngolaClosingVoucher(AccountsController):
+	def autoname(self):
+		"""ACV-<closed year>-#####, numbered within that year.
+
+		The naming series' .YYYY. resolves to the day the document is created, so a
+		2025 closing made in 2026 came out as ACV-2026-...; the year a closing
+		belongs to is the year its period ends in.
+		"""
+		year = getdate(self.to_date or self.posting_date).year
+		self.name = make_autoname("ACV-{0}-.#####".format(year), self.doctype)
+
 	def validate(self):
 		self.validate_dates()
 		self.validate_profiles()
@@ -148,17 +159,26 @@ class AngolaClosingVoucher(AccountsController):
 				)
 
 			# One leg per source account, then the balancing leg on the destination.
+			# "Against" names the other side, as on a Journal Entry, so the General
+			# Ledger shows where each balance went and what a destination received.
+			closed_accounts = []
 			for acc in self.get_balances_based_on_dimensions(
 				source_accounts, group_by_account=True
 			):
 				if flt(acc.bal_in_company_currency):
-					gl_entries.append(self.get_gle_for_source_account(acc))
+					gle = self.get_gle_for_source_account(acc)
+					gle["against"] = destination_account
+					gl_entries.append(gle)
+					closed_accounts.append(acc.account)
 
+			against_sources = ", ".join(dict.fromkeys(closed_accounts))
 			for acc in self.get_balances_based_on_dimensions(
 				source_accounts, group_by_account=False
 			):
 				if flt(acc.bal_in_company_currency):
-					gl_entries.append(self.get_gle_for_destination_account(acc, destination_account))
+					gle = self.get_gle_for_destination_account(acc, destination_account)
+					gle["against"] = against_sources
+					gl_entries.append(gle)
 
 		return gl_entries
 

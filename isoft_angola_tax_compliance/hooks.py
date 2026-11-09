@@ -189,12 +189,15 @@ after_install = "isoft_angola_tax_compliance.install.after_install"
 
 # Request Events
 # ----------------
-# before_request = ["isoft_angola_tax_compliance.utils.before_request"]
+# Profit and Loss / Trial Balance ignore Angola Closing Voucher entries the same
+# way they ignore Period Closing Voucher (see closing_reports.py). Applied per
+# request and per job so it is active in whichever process runs the report.
+before_request = ["isoft_angola_tax_compliance.closing_reports.apply"]
 # after_request = ["isoft_angola_tax_compliance.utils.after_request"]
 
 # Job Events
 # ----------
-# before_job = ["isoft_angola_tax_compliance.utils.before_job"]
+before_job = ["isoft_angola_tax_compliance.closing_reports.apply"]
 # after_job = ["isoft_angola_tax_compliance.utils.after_job"]
 
 # User Data Protection
