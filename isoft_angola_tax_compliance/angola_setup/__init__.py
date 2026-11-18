@@ -38,12 +38,40 @@ _upstream_get_charts_for_country = None
 _upstream_setup_taxes_and_charges = None
 
 
+APP_NAME = "isoft_angola_tax_compliance"
+
+
+def _installed_here():
+	"""True when this app is installed on the site being served right now.
+
+	The runtime patch is process-wide, not per site: a gunicorn worker that has
+	served one site holding this app keeps the replaced chart functions for every
+	other site it serves afterwards. Without this check a site that does NOT have
+	the app is still offered "Angola - Plano Geral de Contabilidade (PGC)" in the
+	setup wizard and the Company form -- and then breaks the moment the tree is
+	drawn by a worker that never imported this app: upstream `get_chart` knows
+	nothing of the chart (its file moved out of erpnext on 2026-08-19),
+	`build_tree_from_json` returns None, and `erpnext.accounts.utils.get_coa`
+	iterates that None -- "'NoneType' object is not iterable", the traceback
+	reported on 2026-11-18.
+
+	So the rule is: offer the chart only where it can always be loaded. A site
+	that wants the Angolan chart installs the app.
+	"""
+	try:
+		return APP_NAME in frappe.get_installed_apps()
+	except Exception:
+		return False
+
+
 def _enabled():
 	"""Whether this app should supply Angola's chart and tax templates.
 
 	Reads the toggle if the settings record exists; defaults to on, so the behaviour
 	matches what ERPNext core did before these datasets moved here.
 	"""
+	if not _installed_here():
+		return False
 	try:
 		value = frappe.db.get_single_value(
 			"Angola NIF Validation Settings", "provide_angola_chart_and_taxes"
